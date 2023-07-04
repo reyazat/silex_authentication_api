@@ -1,0 +1,274 @@
+<?php
+
+namespace Component\Admin\Controllers;
+
+use \Silex\Application;
+use  \Silex\Api\ControllerProviderInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+use Component\Admin\Helpers;
+
+class Admin implements ControllerProviderInterface{
+	
+	public $app;
+	
+	public function connect(Application $application)
+    {
+        $this->app   = $application;
+        $controllers = $this->app['controllers_factory'];
+		
+		$controllers->get(
+            '/panel',
+			function(Request $request){
+			
+				return $this->app->json($this->app['component']('Admin_Helpers_PanelHp')->signupUsers());
+			
+			}
+			
+        );
+		  
+		$controllers->post(
+            '/pack',
+			function(Request $request){
+			
+				$case = $request->get('action');
+				$pack = new Helpers\PackHp($this->app);
+			
+				$payLoad = [];
+				switch($case){
+						
+					case'add' :
+						
+						$payLoad = $pack->createNewPack($request);
+						
+					break;
+						
+					case'edit' :
+
+						$payLoad = $pack->editPack($request);
+						
+					break;
+						
+					case'delete' :
+
+						$payLoad = $pack->deletePack($request);
+						
+					break;
+						
+					case'details' :
+						
+						$payLoad = $pack->packDetails($request);
+						
+					break;
+						
+					default: return new Response('Access Denied!',403);
+						
+				}
+				
+				
+			
+				return $this->app->json($payLoad);
+			
+			}
+			
+        );
+		
+		$controllers->get(
+            '/pack',
+			function(Request $request){
+			
+				$pack = new Helpers\PackHp($this->app);
+				$res = $pack->packList();
+			
+				return $this->app->json($res);
+			
+			}
+			
+        );
+		
+        $controllers->post(
+            '/page',
+			function(Request $request){
+			
+				$case = $request->get('action');
+				$page = new Helpers\PageHp($this->app);
+			
+				$payLoad = [];
+				switch($case){
+						
+					case'add' :
+						$payLoad = $page->createNewPage($request);
+					break;
+						
+					case'details' :
+						$payLoad = $page->details($request);
+					break;
+						
+					case'edit' :
+						$payLoad = $page->editPage($request);
+					break;
+						
+					case'delete' :
+						$payLoad = $page->deletePage($request);
+					break;	
+						
+					case'valid' :
+						$idUser = $request->get('id_user');
+						$idCompany = $request->get('id_company');
+						
+						$payLoad = $page->validPage($idUser,$idCompany);
+					break;
+						
+					default : return new Response('Access Denied!',403);
+						
+				}
+			
+				return $this->app->json($payLoad);
+			
+			}
+			
+        );
+		
+		$controllers->get(
+            '/page',
+			function(Request $request){
+			
+				$page = new Helpers\PageHp($this->app);
+				$payLoad = $page->pageList();
+			
+				return $this->app->json($payLoad);
+			}
+			
+        );
+		
+		$controllers->post(
+            '/menu',
+			function(Request $request){
+			
+				$payLoad = [];
+				$case = $request->get('action');
+				$menu = new Helpers\MenuHp($this->app);
+			
+				switch($case){
+						
+					case'add' :
+						$payLoad = $menu->createNewMenu($request);
+					break;
+						
+					case'edit' :
+						$payLoad = $menu->editMenu($request);
+					break;
+						
+					case'delete' :
+						$payLoad = $menu->deleteMenu($request);
+					break;
+						
+					case'details' :
+						$payLoad = $menu->details($request);
+					break;
+						
+					default: return new Response('Access Denied!',403);
+					
+				}
+			
+				return $this->app->json($payLoad);
+			
+			}
+			
+        );
+		
+		$controllers->get(
+            '/menu',
+			function(Request $request){
+			
+				$menu = new Helpers\MenuHp($this->app);
+				$case = $request->get('action');
+			
+				$payLoad = [];
+				switch($case){
+					
+					case'array' :
+						$payLoad = $menu->menuArray();
+					break;
+						
+					/*case'vertical' :
+						return  $menu->verticalMenu();
+					break;
+						
+					case'horizontal' :
+						return  $menu->horizontalMenu();
+					break;*/
+						
+					case'list' :
+						$payLoad = $menu->menuList();
+					break;
+						
+					default: return new Response('Access Denied!',403);
+						
+				}
+				
+				return $this->app->json($payLoad);
+			
+			}
+			
+        );
+		
+		$controllers->post(
+            '/role',
+			function(Request $request){
+				
+				$payLoad = [];
+				$role = new Helpers\RoleHp($this->app);
+			
+				$case = $request->get('action');
+				switch($case){
+					
+					case'add' :
+						$payLoad = $role->newRole($request);
+					break;
+						
+					case'edit' :
+						$payLoad = $role->editRole($request);
+					break;
+						
+					case'remove' :
+						
+						$idRole = $request->get('id');
+						$payLoad = $role->deleteRole($idRole);
+						
+					break;
+						
+					case'details' :
+						$payLoad = $role->details($request);
+					break;
+						
+					default: return new Response('Access Denied!',403);
+						
+				}
+			
+				return $this->app->json($payLoad);
+			
+			}
+		);
+		
+		$controllers->get(
+            '/role',
+			function(Request $request){
+			
+				$idCompany = $request->get('id_company');
+				$idUser = $request->get('id_user');
+			
+				$role = new Helpers\RoleHp($this->app);
+				$list = $role->roleList($idCompany,$idUser);
+			
+				return $this->app->json($list);
+			}
+		);
+
+        return $controllers;
+    }
+
+	
+}
+

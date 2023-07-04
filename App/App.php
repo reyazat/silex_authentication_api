@@ -2,6 +2,7 @@
 use \Silex\Application;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 use Symfony\Component\Stopwatch\Stopwatch;
 use Symfony\Component\Translation\Loader as Loader;

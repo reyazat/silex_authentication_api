@@ -1,8 +1,0 @@
-software:
-    name: "Order Smarty"
-    global_email: "studio@smartystudio.co.uk"
-  
-    #--- Developer mail ---
-    developer_mail: "itmanager@smartysoftware.net"
-    
-    

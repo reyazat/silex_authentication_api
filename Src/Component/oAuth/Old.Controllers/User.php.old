@@ -1,0 +1,253 @@
+<?php
+
+namespace Component\oAuth\Controllers;
+
+use \Silex\Application;
+use  \Silex\Api\ControllerProviderInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+use Component\oAuth\Helpers\CompanyHp;
+use Component\oAuth\Helpers\UserHp;
+//
+
+use Component\oAuth\Models\SoftwareUser;
+use Component\oAuth\Models\CompanyUser;
+use Component\oAuth\Models\InviteUser;
+
+
+class User implements ControllerProviderInterface{
+	
+	public $app;
+	
+	public function connect(Application $application)
+    {
+        $this->app   = $application;
+        $controllers = $this->app['controllers_factory'];
+		  
+		
+		$controllers->match(
+            '/list',
+			function(Request $request){
+			
+				$payLoad = [];
+				$case = $request->get('action');
+				switch($case){
+						
+					case'all' : 
+						$idCompany = $request->get('id_company');
+						$CompanyHp = new CompanyHp($this->app);
+						$payLoad = $CompanyHp->companyAllUserList($idCompany);
+					break;
+						
+					default: 
+						$idCompany = $request->get('id_company');
+						$idUser = $request->get('id_user');
+						$CompanyHp = new CompanyHp($this->app);
+						$payLoad = $CompanyHp->companyUserList($idCompany,$idUser);
+				}
+				
+				
+				return $this->app->json($payLoad);
+			
+			}
+			
+        )->method('GET|POST');
+
+		
+		
+		$controllers->post(
+            '/invite',
+			function(Request $request){
+				
+				$payLoad = [];
+				$UserHp = new UserHp($this->app);
+				$case = $request->get('action');
+			
+				if(isset($case) &&  $this->app['helper']('Utility')->notEmpty($case)){
+					
+					switch($case){
+							
+						case'add' :
+							$payLoad = $UserHp->addInvite($request);
+						break;
+							
+						case'checkcode' :
+							$payLoad = $UserHp->checkInviteCode($request);
+						break;
+							
+						case'list':
+							$payLoad = $UserHp->inviteList($request);
+						break;
+							
+						case'update':
+							$payLoad = $UserHp->updateinviteList($request);
+						break;
+							
+						case'remove':
+							$payLoad = $UserHp->removeFromInviteList($request);
+						break;
+							
+						case'cancel':
+							$payLoad = $UserHp->cancelinvite($request);
+						break;
+							
+						case'resend':
+							$payLoad = $UserHp->resendinvite($request);
+						break;
+							
+						default: $payLoad = ['status'=>'error','message'=>'Some require fields are empty.'];
+							
+					}
+					
+				}else{
+					
+					$payLoad = ['status'=>'error','message'=>'Some require fields are empty.'];
+					
+				}
+			
+				return $this->app->json($payLoad);
+			
+			}
+			
+        );
+		
+		$controllers->post(
+			 '/info',
+			 function(Request $request){
+				
+				$res = [];
+			
+				$SoftwareUser = new SoftwareUser($this->app);
+				$case = $request->get('action');
+				if(isset($case) &&  $this->app['helper']('Utility')->notEmpty($case)){
+					
+					switch($case){
+							
+						case'identify' :
+							
+							$idUser = $request->get('id_user');
+							$res = $SoftwareUser->getUserByIdentify($idUser);
+							
+					
+						break;
+
+						case'identify&company' :
+						
+							$idUser = $request->get('id_user');
+							$idCompany = $request->get('id_company');	
+							$res = $SoftwareUser->getUserinfo($idUser,$idCompany);
+							
+						break;
+							
+						case'email' :
+							$email = $request->get('email');
+							$res = $SoftwareUser->checkDuplicateUser($email);
+						break;
+
+						default: '';
+							
+					}
+					
+				}
+			
+				return $this->app->json($res);
+			
+			}
+		);
+		
+		$controllers->post(
+			 '/update',
+			 function(Request $request){
+		
+				$idUser = $request->get('id_user');
+				$SoftwareUser = new SoftwareUser($this->app);
+				$payLoad = $SoftwareUser->editUser($idUser,$request);
+				return $this->app->json($payLoad);
+			
+			}
+		);
+		
+		$controllers->post(
+			 '/company',
+			 function(Request $request){
+				$CompanyHp = new CompanyHp($this->app);
+				$case = $request->get('action');
+				switch($case){
+						
+					case'addToCompany' :
+						
+						$payLoad = $CompanyHp->addUserToCompany($request);
+						
+					break;
+						
+					case'delete':
+						
+						$idEmployee = $request->get('id_employee');
+						$idUser = $request->get('id_user');
+						$idCompany = $request->get('id_company');
+
+						$payLoad = $CompanyHp->deleteEmployeeFromCompany($idEmployee,$idUser,$idCompany);
+						
+					break;
+						
+					case'deleteCompany' :
+						
+						$payLoad = $CompanyHp->deleteCompany($request);
+						
+					break;
+						
+					case'edit' :
+						
+						$payLoad = $CompanyHp->updateUserCompany($request);
+						
+					break;
+						
+					case'list' :
+						
+						$idUser = $request->get('id_user');
+						$payLoad = $CompanyHp->getlistOfCompany($idUser);
+						
+					break;
+						
+					case'editDetails':
+						
+						$payLoad = $CompanyHp->editCompanyDetails($request);
+						
+					break;
+						
+					case'child':
+						
+						$payLoad = $CompanyHp->userChild($request);
+						
+					break;
+						
+					case'count':
+						
+						$idCompany = $request->get('id_company');
+						$CompanyUser = new CompanyUser($this->app);
+						$countUser = $CompanyUser->countUser($idCompany);
+						
+						$InviteUser = new InviteUser($this->app);
+						$countInvite = $InviteUser->inviteCount($idCompany);
+						
+						$payLoad = ['status'=>'success','count'=>($countUser['count']+$countInvite['count'])];
+						
+					break;
+						
+					default: $payLoad = $CompanyHp->saveCompany($request);
+						
+				}
+				
+				
+				return $this->app->json($payLoad);
+			
+			 }
+		);
+		
+        return $controllers;
+    }
+
+	
+}
+

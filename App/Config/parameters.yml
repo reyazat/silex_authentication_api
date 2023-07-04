@@ -1,36 +1,38 @@
+translation:
+    locale_fallbacks:
+        1: "en"
+    locale: "en"
+
+assets:
+    assets.version: "v1"
+    assets.version_format: "%s?version=%s"
+    assets.named_packages:
+        css:
+            version: "css2"
+            base_path: ""
+        images:
+            base_urls:
+                1: "https://img.example.com"
+                
 parameters:
-    #--- Seassion passwords
-    sessPass: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.bbHs5_xfhZAEFVA7B1EFQgMF0eyT6T5n8Lu49Bt24xU"
     #--- TimeZone: UTC, Europe/Kiev...
     timezone: UTC
-    DS : "/"
     #--- Debug: true, false ---
-    debug: true
-   
+    debug: false
     #--- Database parameters ---
     mysql_params:
-         driver     : "mysql"
-         host       : "localhost"
-         database   : "orderlogin"
-         username   : "root"
-         password   : "Local@DB"
-         charset    : "utf8"
-         collation  : "utf8_general_ci"
-         prefix     : "ap_"
-         key        : "Ordersmarty_login@2020#$"
-
-
+        driver     : "mysql"
+        host       : "localhost"
+        database   : "c0oauth"
+        username   : "c0webservice"
+        password   : "Data$WebService@3018"
+        charset    : "utf8"
+        collation  : "utf8_general_ci"
+        prefix     : "sm_"
     redis_params:
-
-        host: ""
+        host: "127.0.0.1"
         port: 6379
-        password: ""
-
-    usertype_list:
-        0: Admin
-        1: Owner
-        2: Cashier
-
+        password: "redis@2017"
     #---------MonoLog-----------
     monolog:
         chanels:
@@ -39,4 +41,70 @@ parameters:
         mailer:
             email: "itmanager@bfsc.co.uk"
             subject: "PHP error_log message"
-            from: "itmanager@smartysoftware.net"
+            from: "info@smartysoftware.net"
+    wss:
+        AccessKey: "AKIAV3NR47BL7EBDTT6D"
+        SecretKey: "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"
+        region: "eu-west-2"
+        service: "execute-api"
+        stage: "production"
+        idApi: "gxk3jwb9n2"
+access_ip:
+    1: "192.99.201.45"
+    2: "144.217.39.129"
+    3: "145.239.253.12"
+    4: "51.68.181.201"
+anonymousRoute:
+    1: "/authenticate/signin"
+    2: "/authenticate/signup"
+    3: "/authenticate/refreshtoken"
+    4: "/socialoauth/facebook"
+    5: "/socialoauth/google"
+    6: "/socialoauth/linkedin"
+    7: "/readme"
+    8: "/authenticate/accesstoken"
+    9: "/socialoauth/link"
+    10: "/authenticate/app/firstlogin"
+    11: "/authenticate/app/reload"
+    12: "/plans/freecheckout"
+    13: "/forgetpass/check"
+    14: "/forgetpass/email"
+
+anonymousUrlContain:
+    1: '/^\/js/i'
+    2: '/^\/css/i'
+    3: '/^\/images/i'
+    4: '/^\/Cache\/Compress/i'
+    5: '/^\/Cache\/Images/i'
+    
+software:
+    name: "Smarty Software"
+    global_email: "hello@smartysoftware.net"
+    address: "68 King William St, London EC4N 7DZ"
+    phone:
+    fax:
+    #--- Developer mail ---
+    developer_mail: "dev@mail.com"
+    
+mail:
+    smtp:    
+        mail.host: mail.host.local
+        mail.port: 25
+        mail.username: ""
+        mail.password: ""
+        # ('tls', 'ssl', or null)
+        mail.encryption: null
+        # ('plain', 'login', 'cram-md5', or null)
+        mail.auth_mode: null
+        # Disabling Sending
+        mail.disable_delivery:  true
+    
+webservice:
+    view: "https://crm.smartysoftware.net/"
+    crm: "https://apicrm.smartysoftware.net/"
+    companyhouse: "https://apicompanyhouse.smartysoftware.net/"
+    login: "https://oauth.smartysoftware.net/"
+    setting: "https://setting.smartysoftware.net/"
+    accounting: "https://acc.smartysoftware.net/"
+    website: "https://www.smartysoftware.net/"
+    

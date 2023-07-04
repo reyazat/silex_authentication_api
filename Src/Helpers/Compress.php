@@ -41,10 +41,20 @@ class Compress{
 			$type = '';
 			$type = $this->app['helper']('Utility')->getExt($arg);
 			
-						
 			// check if Cache Dir exist in Web folder in Root Dir
-			$this->app['helper']('FilesManager')->createDir($this->app['baseDir'] . '/Web/Cache/Compress');
-						
+			$fs = new Filesystem();
+			$checkFile = $fs->exists($this->app['baseDir'] . '/Web/Cache/Compress');
+		
+			// if Cache Dir not Exist in Web Dir in Root, make it
+			if($checkFile === false){
+				try {
+					$fs->mkdir($this->app['baseDir'] . '/Web/Cache/Compress');
+				} catch (IOExceptionInterface $e) {
+					
+					echo "An error occurred while creating your directory at ".$e->getPath();
+				}
+			}
+			
 			// Make Compress file path
 			$compressFilePath = $compressFileUrl = $filePath = '';
 			$filePath = $this->app['baseDir'].'/Web/'.$arg;
@@ -152,8 +162,8 @@ class Compress{
 		$css = new AssetCollection(array(
 			new FileAsset($file),
 		), array(
-			new UglifyCssFilter(),
-			//new Yui\CssCompressorFilter($this->app['baseDir'].'/vendor/bin/yuicompressor.jar'),
+			//new UglifyCssFilter(),
+			new Yui\CssCompressorFilter($this->app['baseDir'].'/vendor/bin/yuicompressor.jar'),
 		));
 		
 		return $css->dump();

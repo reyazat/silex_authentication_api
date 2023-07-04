@@ -1,0 +1,15 @@
+UnexpectedError: Sorry, an unexpected error occurred. please contact support. Error code `%code%`.
+InvalidParametrs: The request is missing a required parameter, includes an invalid parameter value.Please check the `%name%` parameter.
+200: OK, Success!
+400: Bad Request.
+401: Access is denied due to invalid credentials.
+404: Sorry, the page you are looking for could not be found.
+405: The requested resource does not support http method `%code%`.
+406: Not Acceptable.
+408: Request Timed Out.
+AccessDenied: You are not permitted to access the requested URL. Error code 403
+RecaptchaExpired: Sorry!Verification expired,Please verify again.
+NotFound: Sorry No Data Found.
+RequiredsEmpty: Some required fields are empty or contain an improper value . Please check %name%.
+RquestDel: This request has been successfully deleted.
+AlreadyExists: This %name% already exists.

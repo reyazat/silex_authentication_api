@@ -12,33 +12,21 @@ class RequestParameter{
 	public function getParameter($request = []){
 		
 		if($this->app['helper']('Utility')->notEmpty($request)){
-			$res =  $request->query->all();
+			return $request->query->all();
 		}else{
-			$res =  $this->app['request_content']->query->all();
-		}
-		if(is_array($res)){
-			foreach($res as $ky=>$val){
-				if(!is_array($val))$res[$ky] = $this->app['helper']('Utility')->secureInput($val);
-			}
+			return $this->app['request_content']->query->all();
 		}
 		
-		return $res;
 	}
 	
 	public function postParameter($request = []){
 		
 		if($this->app['helper']('Utility')->notEmpty($request)){
-			$res =   $request->request->all();
+			return $request->request->all();
 		}else{
-			$res =   $this->app['request_content']->request->all();
+			return $this->app['request_content']->request->all();
 		}
-		if(is_array($res)){
-			foreach($res as $ky=>$val){
-				if(!is_array($val))$res[$ky] = $this->app['helper']('Utility')->secureInput($val);
-			}
-		}
-		
-		return $res;		
+				
 	}
 	
 }

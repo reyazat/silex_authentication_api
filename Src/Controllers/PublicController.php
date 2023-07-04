@@ -4,8 +4,10 @@ namespace Controllers;
 use \Silex\Application;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Cookie;
 use Silex\Api\ControllerProviderInterface;
-
+use PragmaRX\Google2FA\Google2FA;
+use Symfony\Component\Finder\Finder;
 
 class PublicController implements ControllerProviderInterface 
 	
@@ -18,40 +20,78 @@ class PublicController implements ControllerProviderInterface
 	
 	public function connect(Application $app){
 		$this->app = $app;
-				
+		
 		$index = $app['controllers_factory'];
 		
-		$index->get("/readme", [$this, 'readme'])->bind('readme');
-		$index->post("/signin", [$this, 'signinController']);
-		$index->post("/signup", [$this, 'signupController']);
-		$index->get("/verify", [$this, 'verifyTokenController']);
-		$index->get("/signup/verify/{key}", [$this, 'verifyEmailController']);
+		$index->get("/readme",[$this,'readme'])->bind('readme');
+		$index->post("/wss",[$this,'wssConnection']);
+		$index->post("/live",[$this,'liveUsers']);
 		
-		$index->post("/invite", [$this, 'addInviteController']);
-		$index->get("/invite", [$this, 'getAllInviteController']);
-		$index->get("/invite/resend/{inviteid}", [$this, 'reSendInviteController']);
-		$index->put("/invite/{inviteid}", [$this, 'updateInviteController']);
-		$index->delete("/invite/{inviteid}", [$this, 'delInviteController']);
+		$index->get("/{_locale}/hello",[$this,'hello'])->bind('hello');
+
 		
-		$index->post("/verifyinvitecode", [$this, 'verifyInviteCodeController']);
+		$index->match("/test",[$this,'test'])->method('GET|POST')->bind('test');
 		
-		// DeviceController controller
-		$deviceController = new DeviceController($this->app);
-		$deviceController->addRoutes($index);
+		$index->get("/info",[$this,'info'])->bind('info');
 		
-		// ForgetPassword controller
-		$forgetPasswordController = new ForgetPasswordController($this->app);
-		$forgetPasswordController->addRoutes($index);
 		
-		// User controller
-		$userController = new UserController($this->app);
-		$userController->addRoutes($index);
+		$index->get("/feedback",[$this, 'feedback'])->bind('feedback');
 		
 		return $index;
-	}	
+	}
+	
+	public function liveUsers(){
+		
+		$params = $this->app['helper']('RequestParameter')->postParameter();
+		if(!isset($params['id_user']) || 
+		   (isset($params['id_user']) && !$this->app['helper']('Utility')->notEmpty($params['id_user'])) || 
+		   !isset($params['id_company']) || 
+		   (isset($params['id_company']) && !$this->app['helper']('Utility')->notEmpty($params['id_company'])) || 
+		   !isset($params['page']) || 
+		   (isset($params['page']) && !$this->app['helper']('Utility')->notEmpty($params['page'])) || 
+		   !isset($params['from']) || 
+		   (isset($params['from']) && !$this->app['helper']('Utility')->notEmpty($params['from']))){
+			
+			$msg = $this->app['translator']->trans('InvalidParametrs', array('%name%' => 'Authorization'));
+			$payLoad = ['status'=>'error','message'=>$msg];
+			
+		}else{
+			
+			if($params['from'] == 'CRM'){
+				
+				$this->app['component']('oAuth_Models_LiveUsers')->insertUser(['id_user'=>$params['id_user'],
+																	   'id_company'=>$params['id_company'],
+																	   'url'=>$params['page']]);
+				
+			}else if($params['from'] == 'ACC'){
+				
+				$this->app['component']('oAuth_Models_LiveUsersAcc')->insertUser(['id_user'=>$params['id_user'],
+																				  'id_company'=>$params['id_company'],
+																				  'company'=>$params['company_name'],
+																				  'url'=>$params['page']]);
+				
+			}
+
+			$payLoad = ['status'=>'success'];
+			
+		}
+		
+		return $this->app->json($payLoad);
+	}
+	
+	public function wssConnection(){
+		
+		$postBody = file_get_contents("php://input");
+		$parseBody = json_decode($postBody, true);
+		
+		$res = $this->app['helper']('wssHp')->receiveMsg($parseBody);
+		return $this->app->json(['statusCode'=>200]);
+		
+	}
+	
 	public function readme(Request $request){
 		
-		$finder = new \Symfony\Component\Finder\Finder();
+		$finder = new Finder();
 		$finder->name('README.md')->depth('== 0');
 		$finder->files()->in($this->app['baseDir']);
 		foreach ($finder as $file) {
@@ -59,85 +99,62 @@ class PublicController implements ControllerProviderInterface
 		}
 		$Parsedown = new \Parsedown();
 		$contents = $Parsedown->setBreaksEnabled(true)->setMarkupEscaped(true)->setUrlsLinked(true)->text($contents , true); 					
-		return '<link href="'.$this->app['baseUrl'].'Css/readme.css" rel="stylesheet" type="text/css">'.$contents ;
+		return $this->app['twig']->render('PublicController/Readme.twig', array(
+			'content' => $contents,
+		));
+
     }
 	
-	public function verifyEmailController($key = '')
-	{
-		$payLoad = $this->app['helper']('PublicController_LoginHp')->verifyEmail($key);
-		return setResponse($payLoad);
-	}
-	public function verifyTokenController(Request $request)
-	{
-		$credential = $request->headers->get('credential');
-		$token = $request->headers->get('token');
-			
-		$payLoad = $this->app['helper']('PublicController_LoginHp')->verifyToken($credential, $token);
-		return setResponse($payLoad);
+	
+	public function hello(Request $request){
 		
-	}
+		//return $this->app['translator']->trans('hello', array('%name%' => 'ali'));
+		return $this->app['twig']->render('hello.twig',array('%name%' => 'ali'));
 
-	public function signinController(Request $request)
-	{
-
-		$credential = $request->headers->get('credential');
+    }
+	
+	public function test(Application $app){
 		
-		$params = $this->app['helper']('RequestParameter')->postParameter();
-		$payLoad = $this->app['helper']('PublicController_LoginHp')->signIn($credential, $params);
+		
+    
+		$google2fa = new Google2FA();
+		$secretkey = $google2fa->generateSecretKey(32);
+		dump($secretkey);
 
-		return setResponse($payLoad);
-	}
+		$google2fa_url = $google2fa->getQRCodeGoogleUrl(
+			'tmwebseo',
+			'user@yahoo.com',
+			$secretkey
+		);
+		echo $google2fa_url;
+		die;
+		
+		return $app->json(array('index'));
+    }
+	
+	public function info(Request $request){
+		$google2fa = new Google2FA();
+		$secret = '380030';
 
-	public function signupController(Request $request)
-	{
-		$credential = $request->headers->get('credential');
-		$params = $this->app['helper']('RequestParameter')->postParameter();
-		$payLoad = $this->app['helper']('PublicController_LoginHp')->signUp($credential, $params);
-		return setResponse($payLoad);
+		$valid = $google2fa->verifyKey('XSD4RVZVLU433URQW44BYXSHMJZFCKVP', $secret,0);
+		
+		dump($valid);
+		$this->app['session']->set('foo', 'bar');
+		$this->app['predis']->set('predis', 'redis');
+		$this->app['predis']['db']->set('db', 'database');
+		$this->app['predis']['cache']->set('cache', 'caching');
+
+		
+		
+		return new Response(phpinfo(), 200, array('Cache-Control' => 's-maxage=3600, public'));
+
+    }
+	
+	public function feedback(Request $request) {
+		$message = $request->get('message');
+		dump($message,true);
+		return new Response('Thank you for your feedback!', 201);
 	}
-	
-	public function addInviteController(Request $request)
-	{
-		$params = $this->app['helper']('RequestParameter')->postParameter();
-		$payLoad = $this->app['helper']('PublicController_LoginHp')->addInvite($params);
-		return setResponse($payLoad);
-	}
-	
-	public function getAllInviteController()
-	{
-		$params = $this->app['helper']('RequestParameter')->getParameter();
-		$payLoad = $this->app['helper']('PublicController_LoginHp')->getAllInvite($params);
-		return setResponse($payLoad);
-	}
-	
-	public function reSendInviteController($inviteid)
-	{
-		$payLoad = $this->app['helper']('PublicController_LoginHp')->reSendInvite($inviteid);
-		return setResponse($payLoad);
-	}
-	public function updateInviteController($inviteid)
-	{
-		$params = $this->app['helper']('RequestParameter')->postParameter();
-		$payLoad = $this->app['helper']('PublicController_LoginHp')->updateInvite($inviteid, $params);
-		return setResponse($payLoad);
-	}
-	
-	public function delInviteController($inviteid)
-	{
-		$payLoad = $this->app['helper']('PublicController_LoginHp')->removeInvite($inviteid);
-		return setResponse($payLoad);
-	}
-	
-	public function verifyInviteCodeController(Request $request)
-	{
-		$credential = $request->headers->get('credential');
-		$params = $this->app['helper']('RequestParameter')->postParameter();
-		$payLoad = $this->app['helper']('PublicController_LoginHp')->verifyInviteCode($credential, $params);
-		return setResponse($payLoad);
-	}
-	
-	
-	
+ 
 	
 }
-

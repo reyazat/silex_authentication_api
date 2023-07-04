@@ -56,16 +56,16 @@ foreach ($this->app['config']['parameters']['monolog']['chanels'] as $channel) {
 
 		$handler = new FirePHPHandler();
 		$log->pushHandler($handler);
-/*
-		$mailhandler = new NativeMailerHandler(
+
+		/*$mailhandler = new NativeMailerHandler(
 				$this->app['config']['parameters']['monolog']['mailer']['email'],
 				$this->app['config']['parameters']['monolog']['mailer']['subject'],
 				$this->app['config']['parameters']['monolog']['mailer']['from']
 			);
 
 		$dupicate = new DeduplicationHandler($mailhandler,$this->app['config']['log_dir'].'Duplicate/'.$channel.'.log',Logger::ERROR,300);
-		$log->pushHandler($dupicate);
-*/
+		$log->pushHandler($dupicate);*/
+
 		$log->pushProcessor(new WebProcessor());
 		$log->pushProcessor(new IntrospectionProcessor());
 		$log->pushProcessor(new MemoryUsageProcessor());
@@ -89,16 +89,16 @@ $this->app->extend('monolog', function($monolog) {
 	
 	$handler = new FirePHPHandler();
 	$monolog->pushHandler($handler);
-	/*
-	$mailhandler = new NativeMailerHandler(
+	
+	/*$mailhandler = new NativeMailerHandler(
 				$this->app['config']['parameters']['monolog']['mailer']['email'],
 				$this->app['config']['parameters']['monolog']['mailer']['subject'],
 				$this->app['config']['parameters']['monolog']['mailer']['from']
 			);
 		
 	$dupicate = new DeduplicationHandler($mailhandler,$this->app['config']['log_dir'].'Duplicate/monolog.log',Logger::ERROR,300);
-	$monolog->pushHandler($dupicate);
-*/
+	$monolog->pushHandler($dupicate);*/
+
 	
 	
 	$monolog->pushProcessor(new WebProcessor());

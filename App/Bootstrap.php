@@ -26,18 +26,15 @@ class Bootstrap extends Config {
         $this->app['watch']->start('eApp');
 		self::errorException();
 		include_once $this->app['baseDir'] . '/App/Session.php';
-       
+        // Routes & middlewares
+		include_once $this->app['baseDir'] . '/App/Routes.php';
 		// Init providers
 		include_once $this->app['baseDir'] . '/App/Register.php';
-		 
-		include_once $this->app['baseDir'] . '/App/Logger.php';
-		
 		include_once $this->app['baseDir'] . '/App/Extension.php';
 		//end
-		// Routes & middlewares
-		include_once $this->app['baseDir'] . '/App/Routes.php';
+		include_once $this->app['baseDir'] . '/App/Logger.php';
 
-		
+
 		//------ WATCH-Bootstrap --------//
         $this->app['watch']->lap('eApp');
 		
@@ -47,16 +44,10 @@ class Bootstrap extends Config {
 		
     }
 	
-	private function load($hash,$options=[]) {
+	private function load($hash) {
 		$tags = explode("_", $hash);
-		$tags = array_map('ucfirst', $tags);
 		$newadd = implode("\\" , $tags);
-		if(!empty($options)){
-			$res = new $newadd($this->app,$options);
-		}else{
-			$res = new $newadd($this->app);
-		}
-		return $res;
+		return new $newadd($this->app);
 	}
 	public function Helper($hash) {
 		
@@ -70,10 +61,10 @@ class Bootstrap extends Config {
 	public function errorException() {
 		
 		// redirect to 404 page if rout not found
-		$this->app->error(function (\Exception $e, Request $request, $code) {
-			
-			$errorMessage = $requestUrl = $getMethod= '';
-			//dumper($e,$request);
+		$this->app->error(function (\Exception $e, $request) {
+			$code = $errorMessage = $requestUrl = $getMethod= '';
+			// error code
+			if(method_exists($e, 'getStatusCode')) $code = $e->getstatusCode();
 			// error message
 			if(method_exists($e, 'getmessage')) $errorMessage = $e->getmessage();
 			// error message
@@ -86,36 +77,34 @@ class Bootstrap extends Config {
 			if(!$this->app['debug']){
 				switch ($code) {
 				case 404:
-					$message = $this->app['translator']->trans('404');
+					$message = 'Sorry, the page you are looking for could not be found.';
 				break;
 						
 				case 401:
-					$message =  $this->app['translator']->trans('401');
+					$message = 'Access is denied due to invalid credentials.';
 				break;
 						
 				case 405:
-					$message =  $this->app['translator']->trans('405');
+					$message = 'The requested resource does not support http method `'.$getMethod.'`.';
 					
 				break;
 						
 				case 408:
-					$message = $this->app['translator']->trans('408');
+					$message = 'Request Timed Out.';
 					
 				break;
 						
 						
 				//default:$message = 'We are sorry, but something went terribly wrong.';Whoops, looks like something went wrong
 				}
-				return setResponse(['code'=>$code,'status'=>'Error', 'message'=>$message]);exit;
+				return new Response($message, $code);
 			}
 
 		});
 
 
 	}
-	/**
-     *  Run this application
-     */
+
 	public function setapp($key,$value) {
 		$this->app[$key] = $value;
     }
@@ -126,7 +115,9 @@ class Bootstrap extends Config {
 			return $this->app;
 		}
     }
-	
+	/**
+     *  Run this application
+     */
     public function run() {
         // Run app
 		if ($this->app['debug']) {

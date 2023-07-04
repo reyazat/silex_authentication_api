@@ -28,47 +28,31 @@ class Config  extends App{
 			$params['http'] = (isset($_SERVER['REDIRECT_HTTPS']) OR isset($_SERVER['HTTPS'])) ? "https://" : "http://";
 			$params['host'] = $_SERVER['SERVER_NAME'];
 			$params['port'] = $_SERVER['SERVER_PORT'];
+			$params['subpath'] = dirname($_SERVER["PHP_SELF"]);
 			
-			if (strpos($_SERVER["PHP_SELF"],'Web') !== false) {
-				$params['subpath'] = substr(dirname($_SERVER["PHP_SELF"]), 0, ((strrpos(dirname($_SERVER["PHP_SELF"]), "Web"))));
-			}else{
-				$params['subpath'] = dirname($_SERVER["PHP_SELF"]);
-			}
-			$sapi_type = php_sapi_name();
-			if(substr($sapi_type, 0, 3) == 'cli') {
-				$params['base_url'] = NULL;
-			}else{
-				$params['base_url'] =($params['port'] != "80" && $params['port'] != "443") ? ($params['http'].$params['host'] . ":" . $params['port'] . $params['subpath']) : ($params['http'].$params['host'] . $params['subpath']);
-			}
-			$params['ws_url'] =($params['port'] != "80" && $params['port'] != "443") ? ($params['port']) : ($params['host']);
+        	$params['base_url'] =($params['port'] != "80" && $params['port'] != "443") ? ($params['http'].$params['host'] . ":" . $params['port'] . $params['subpath']) : ($params['http'].$params['host'] . $params['subpath']);
+			
 			$params['base_dir'] = BASEDIR;
 			$params['log_dir'] = BASEDIR . "/Logs/";
 			$params['cache_dir'] = BASEDIR . "/Cache/";
 			$params['twig_path'] = BASEDIR . "/Src/View/";
-			$params['trans_path'] = BASEDIR .'/App/Translation/';
+			$params['trans_path'] = BASEDIR .'/App/Config/Translation/';
 			
-			$path = BASEDIR . '/App/Config/';
-			$content = '';
+			$fileConfig = is_file(BASEDIR . '/env.yml') ? BASEDIR . '/env.yml' : BASEDIR . '/App/Config/parameters.yml';
+			
 			$fs = new Symfony\Component\Filesystem\Filesystem();
-			if($fs->exists($path)){
-				$finder = new \Symfony\Component\Finder\Finder();
-				$finder->files()->in($path);
-				foreach ($finder as $file) {
-					$content .= $file->getContents();
-					$content .= "\n";
-				}
-				
+			if($fs->exists(array($fileConfig))){
 				try {
-					$data = Yaml::parse($content);
+					$data = Yaml::parse(file_get_contents($fileConfig));
 				
 				} catch (ParseException $e) {
 				
-					return setResponse(['code'=>501,'status'=>'Error', 'message'=>'Not Implemented (YAML SECTION) : '.$e->getMessage()]);exit;
+					echo $this->app->json("Internal Server Error (YAML SECTION) : ".$e->getMessage(), 500);exit;
 				
 				}
 			}else{
 				
-					return setResponse(['code'=>501,'status'=>'Error', 'message'=>'Not Implemented (YAML SECTION)']);exit;
+					echo $this->app->json("Internal Server Error (YAML SECTION)", 500);exit;
 			}
 			
 			foreach ($data as $keys => $values) {
@@ -89,7 +73,6 @@ class Config  extends App{
 		//Set basepath option
 		$this->app['baseDir'] = $this->app['config']['base_dir'];
 		$this->app['baseUrl'] = $this->app['config']['base_url'];
-		$this->app['wsUrl'] = $this->app['config']['ws_url'];
 		//Set Timezone
 		if (isset($this->app['config']['parameters']['timezone'])) {
 			date_default_timezone_set($this->app['config']['parameters']['timezone']);

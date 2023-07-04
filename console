@@ -6,16 +6,15 @@
  * Copy this file to your project (bin/console is recommended), change the paths
  * to app.php and run it by using "php bin/console".
  */
-
 if (!defined('BASEDIR')) {
         define('BASEDIR', realpath(__DIR__ . '/'));
     }
 set_time_limit(0);
 error_reporting(0);
-
 require_once BASEDIR . '/App/Bootstrap.php';
-		
+	
 $bootstrap = new Bootstrap();
+
 
 $app = $bootstrap->getapp();
 
@@ -27,5 +26,8 @@ if (!isset($app['console'])) {
 }
 
 $console = $app['console'];
-//$console->add(new Console\DeleteFiles($app));
+//$console->add(new Activity($app));
+//$console->add(new Command\PassHash($app));
+$console->add(new Command\WebSocketServer($app));
+$console->add(new Command\IpInfo($app));
 $console->run();

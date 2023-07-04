@@ -1,0 +1,344 @@
+<?php
+namespace Component\oAuth\Models;
+
+//use Helper\MenuBuilder;
+
+
+class CompanyUser extends \Illuminate\Database\Eloquent\Model{
+	
+	protected $table = 'company_user';
+	protected $app;
+	
+	public function __construct($app){
+		$this->app = $app;
+    }
+	public function addUserCompany($res){
+		$this->app['helper']('ModelLog')->Log();
+		$payLoad = [];
+		
+		$res = self::makeFields($res);
+		
+		if(!isset($res['id_company']) || 
+		   !isset($res['user_identify']) || 
+		   !isset($res['user_type']) || 
+		   !isset($res['maker_identify']) ||
+		   !$this->app['helper']('Utility')->notEmpty($res['id_company']) || 
+		   !$this->app['helper']('Utility')->notEmpty($res['user_identify']) || 
+		   !$this->app['helper']('Utility')->notEmpty($res['user_type']) || 
+		   !$this->app['helper']('Utility')->notEmpty($res['maker_identify'])){
+			
+			$this->app['monolog.debug']->debug('Some required fields are empty( Id Company,Id User,User Type,Id Maker).',$res);
+			$msg = $this->app['translator']->trans('InvalidParametrs', array('%name%' => 'Id Company,Id User,User Type,Id Maker'));
+			
+			$payLoad = ['status'=>'error','message'=>$msg];
+			
+		}else{
+			
+			$res['cdate'] = $this->app['helper']('DateTimeFunc')->nowDateTime();
+			$id = CompanyUser::insertGetId($res);
+			
+			if($this->app['helper']('Utility')->notEmpty($id)){
+				
+				// call to create email template default
+				/*$this->app['helper']('OutgoingRequest')->postRequest(
+					$this->app['config']['webservice']['crm'].'email/',
+					[],
+					['action'=>'addDefaultTemp',
+					 'id_user'=>$res['user_identify'],
+					 'owner_company'=>$res['id_company']]);*/
+				
+				$msg = $this->app['translator']->trans('add', array('%name%' => 'Company'));
+				$payLoad = ['status'=>'success','message'=>$msg,'id'=>$res['id_company']];
+				
+			}else{
+				
+				$this->app['monolog.debug']->debug('error in add user comany',$res);
+				$msg = $this->app['translator']->trans('UnexpectedError', array('%code%' => $this->app['monolog.debug']->getProcessors()[0]->getUid()));
+				
+				$payLoad = ['status'=>'error','message'=>$msg];
+			}
+			
+		}
+		
+		return $payLoad;
+		
+	}
+	
+	public function companyList($idUser){
+		$this->app['helper']('ModelLog')->Log();
+		$companyList = CompanyUser::select('company_user.id_company as id',
+										   'company_user.user_type',
+										   'company_user.cdate',
+										   'company_details.id_plans',
+										   'company_details.company_name',
+										   'company_details.industry',
+										   'company_details.timezone')
+									->leftJoin('company_details', 'company_details.id', '=', 'company_user.id_company')
+									->where('company_user.user_identify','=',$idUser)
+									->where('company_user.status','=','Active')
+									->get();
+		
+		
+		return $companyList->toArray();
+		
+	}
+	
+	public function allUserList($idCompany){
+		
+		$this->app['helper']('ModelLog')->Log();
+		$fetchUserList = CompanyUser::select('software_user.identify',
+											 'software_user.first_name',
+											 'software_user.last_name',
+											 'software_user.email',
+											 'company_user.status',
+											 'company_user.maker_identify',
+											 'company_user.cdate');
+		$fetchUserList = $fetchUserList->leftjoin('software_user','software_user.identify','=','company_user.user_identify');
+		$fetchUserList = $fetchUserList->where('company_user.id_company','=',$idCompany);
+		
+		$fetchUserList = $fetchUserList->get()->toArray();
+		
+		return $fetchUserList;
+		
+	}
+
+	public function userList($idCompany,$IdUser,$condition = []){
+		
+		$this->app['helper']('ModelLog')->Log();
+		$fetchUserList = CompanyUser::select('software_user.identify',
+											 'software_user.first_name',
+											 'software_user.last_name',
+											 'software_user.email',
+											 'company_user.status',
+											 'company_user.cdate');
+		$fetchUserList = $fetchUserList->leftjoin('software_user','software_user.identify','=','company_user.user_identify');
+		$fetchUserList = $fetchUserList->where('company_user.id_company','=',$idCompany);
+
+		$fetchUserList = $fetchUserList->where('company_user.user_identify','<>',$IdUser);
+		
+		if($this->app['helper']('Utility')->notEmpty($condition)){
+			
+			foreach($condition as $key=>$cond){
+				
+				$fetchUserList = $fetchUserList->where($key,'=',$cond);
+				
+			}
+			
+		}
+		
+		$fetchUserList = $fetchUserList->get()->toArray();
+		
+		return $fetchUserList;
+		
+	}
+	
+	public function deleteUser($idUser,$idCompany){
+		$this->app['helper']('ModelLog')->Log();
+		$payLoad = [];
+		if(!$this->app['helper']('Utility')->notEmpty($idUser) ||
+		  !$this->app['helper']('Utility')->notEmpty($idCompany)){
+			
+			$payLoad = ['status'=>'error','message'=>'Some require fields are empty(Id User,Id Company).'];
+			
+		}else{
+			
+			$deleteUser = CompanyUser::where('id_company','=',$idCompany)->
+					 				where('user_identify','=',$idUser)->
+									delete();
+		;
+			if($this->app['helper']('Utility')->notEmpty($deleteUser)){
+				
+				$payLoad = ['status'=>'success','message'=>'User deleted successfully.'];
+
+			}else{
+				
+				$this->app['monolog.debug']->error('error in delete user.',['id user'=>$idUser,
+																	   'id company'=>$idCompnay]);
+				
+				$payLoad = ['status'=>'error','message'=>'Sorry!an error occurred,please contact support.'];
+
+			}
+			
+		}
+	
+		return $payLoad;
+	}
+	
+	private function makeFields($details){
+		
+		$fields = [];
+		if(isset($details['id_company']) && $this->app['helper']('Utility')->notEmpty($details['id_company'])){
+			$fields['id_company'] = $details['id_company'];
+		}
+		
+		if(isset($details['expire_time']) && $this->app['helper']('Utility')->notEmpty($details['expire_time'])){
+			$fields['expire_time'] = $details['expire_time'];
+		}
+		
+		if(isset($details['company_name']) && $this->app['helper']('Utility')->notEmpty($details['company_name'])){
+			$fields['company_name'] = $details['company_name'];
+		}
+		
+		if(isset($details['user_identify']) && $this->app['helper']('Utility')->notEmpty($details['user_identify'])){
+			$fields['user_identify'] = $details['user_identify'];
+		}
+		
+		if(isset($details['user_type']) && $this->app['helper']('Utility')->notEmpty($details['user_type'])){
+			$fields['user_type'] = $details['user_type'];
+		}
+		
+		if(isset($details['status']) && $this->app['helper']('Utility')->notEmpty($details['status'])){
+			$fields['status'] = $details['status'];
+		}
+		
+		if(isset($details['maker_identify']) && $this->app['helper']('Utility')->notEmpty($details['maker_identify'])){
+			$fields['maker_identify'] = $details['maker_identify'];
+		}
+		
+		if(isset($details['user_type']) && $details['user_type'] != 'SuperAdmin'){
+			
+			/*if(isset($details['id_role']) && $this->app['helper']('Utility')->notEmpty($details['id_role'])){
+				$fields['id_role'] = $details['id_role'];
+			}*/
+
+			if(isset($details['resources']) && $this->app['helper']('Utility')->notEmpty($details['resources'])){
+				$fields['resources'] = $details['resources'];
+			}
+			
+		}else{
+			//$fields['id_role'] = NULL;
+			$fields['resources'] = NULL;
+		}
+		
+		
+		if(isset($details['id_packs']) && $this->app['helper']('Utility')->notEmpty($details['id_packs'])){
+			$fields['id_packs'] = $details['id_packs'];
+		}
+
+		return $fields;
+		
+	}
+	
+	public function suspendUser($idUser,$idCompany,$details){
+		
+		$this->app['helper']('ModelLog')->Log();
+		$payLoad = [];
+		
+		if(!$this->app['helper']('Utility')->notEmpty($idUser) ||
+		   !$this->app['helper']('Utility')->notEmpty($idCompany) ||
+		   !$this->app['helper']('Utility')->notEmpty($details)){
+			
+			$payLoad = ['status'=>'error','message'=>'Some required fields are empty(Id Company,Id User,Id Employee,Edit fields).'];
+			
+		}else{
+
+			$updateCompanyUser = CompanyUser::where('user_identify', $idUser)
+												->where('id_company', $idCompany)
+												->update($details);
+
+			if($this->app['helper']('Utility')->notEmpty($updateCompanyUser)){
+				
+				$payLoad = ['status'=>'success','message'=>'User updated successfully.'];
+				
+			}else{
+
+				$this->app['monolog.debug']->warning('error in update user company details.',$details);
+				$payLoad = ['status'=>'error','message'=>'Sorry!an error occurred,please contact support.'];
+				
+			}
+			
+		}
+		
+		return $payLoad;
+		
+	}
+	
+	public function editUser($idUser,$idCompany,$details){
+		
+		$this->app['helper']('ModelLog')->Log();
+		$payLoad = [];
+		
+		if(!$this->app['helper']('Utility')->notEmpty($idUser) ||
+		   !$this->app['helper']('Utility')->notEmpty($idCompany) ||
+		   !$this->app['helper']('Utility')->notEmpty($details)){
+			
+			$payLoad = ['status'=>'error','message'=>'Some required fields are empty(Id Company,Id User,Id Employee,Edit fields).'];
+			
+		}else{
+			
+			$details = self::makeFields($details);
+			
+			if($this->app['helper']('Utility')->notEmpty($details['id_role'])){
+				
+				$getResource = $this->app['helper']('HandlleRequest')->returnResult('/admin/role',
+																				'POST',
+																				['id'=>$details['id_role'],
+																				 'id_company'=>$idCompany,
+																				 'action'=>'details']);
+				
+				$resResource = $this->app['helper']('Utility')->convertResponseToArray($getResource);
+				$details['resources'] = $resResource['resources'];
+				
+			}
+			
+		
+			$updateCompanyUser = CompanyUser::where('user_identify', $idUser)
+												->where('id_company', $idCompany)
+												->update($details);
+
+			if($this->app['helper']('Utility')->notEmpty($updateCompanyUser)){
+				
+				// add user to update menu list
+				$menuBuilder = $this->app['helper']('MenuBuilder')->addToMenuSession($idUser,$idCompany);
+				//$menuBuilder = new MenuBuilder($this->app);
+				//$menuBuilder->addToMenuSession($idUser,$idCompany);
+				
+				$payLoad = ['status'=>'success','message'=>'User updated successfully.'];
+				
+			}else{
+
+				$this->app['monolog.debug']->warning('error in update user company details.',$details);
+				$payLoad = ['status'=>'error','message'=>'Sorry!an error occurred,please contact support.'];
+				
+			}
+			
+		}
+		
+		return $payLoad;
+		
+	}
+	
+	public function getUserWithIdRole($idRole){
+		
+		$payLoad = [];
+		if(!$this->app['helper']('Utility')->notEmpty($idRole)){
+			$payLoad = ['status'=>'error','message'=>'Some required fields are empty(Id Role).'];
+		}else{
+			
+			$res = CompanyUser::where('id_role','=',$idRole)->get();
+			$payLoad = $res->toArray();
+			
+		}
+		
+		return $payLoad;
+	}
+	
+	public function countUser($idCompany){
+		
+		$payLoad = [];
+		if($this->app['helper']('Utility')->notEmpty($idCompany)){
+			
+			$countUser = CompanyUser::where('id_company','=',$idCompany)->where('status','=','Active')->count();
+			$payLoad = ['status'=>'success','count'=>$countUser];
+			
+		}else{
+			
+			$payLoad = ['status'=>'error','message'=>'Some required fields are empty(Id Company).'];
+			
+		}
+		
+		return $payLoad;
+		
+	}
+	
+}

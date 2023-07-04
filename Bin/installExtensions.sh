@@ -29,3 +29,47 @@ if [ $(echo $versionnumber'<'$b |bc -l) -eq 1 ]; then
 		echo failed php$versionnumber-bcmath
 	fi
 fi
+sudo apt-get -y update && sudo apt-get -y upgrade && sudo apt-get -y dist-upgrade
+RESULT=$?
+if [ $RESULT -eq 0 ]; then
+	curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+	RESULT=$?
+	if [ $RESULT -eq 0 ]; then
+		apt-get purge -y nodejs
+		apt-get install -y nodejs
+	else
+		echo failed nodejs
+	fi
+else
+	echo failed update and upgrade
+fi
+
+npm install -g uglify-js
+RESULT=$?
+if [ $RESULT -eq 0 ]; then
+	echo OK
+else
+	echo failed uglify-js
+fi
+
+npm install -g uglifycss
+RESULT=$?
+if [ $RESULT -eq 0 ]; then
+	echo OK
+else
+	echo failed uglifycss
+fi
+
+
+
+apt-get autoremove -y
+
+apt-get install -y optipng
+
+apt-get install -y libjpeg-turbo-progs
+RESULT=$?
+if [ $RESULT -eq 0 ]; then
+echo '*******************FINISH*************************';
+else
+echo failed libjpeg-turbo-progs
+fi
