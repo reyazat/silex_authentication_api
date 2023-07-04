@@ -1,0 +1,18 @@
+edit: %name% edited successfully.
+add: %name% added successfully.
+create: %name% created successfully.
+delete: %name% deleted successfully.
+upload: %name% uploaded successfully.
+extionsion: Wrong extension.
+exist: %name% allready exist.
+send: %name% sent successfully.
+cancel: %name% canceled successfully.
+schedule: %name% scheduled successfully.
+notSync: you have not sync %name%.
+InvalidUser: Please enter a valid username.
+Verification: User verified successfully.
+notverified: An account with that username already exists, but hasn't been activated. Please check your inbox and spam folder.
+notresults: There are no results to display.
+FileHasNotBeenUploaded: The file has not been uploaded to the server.
+donotmatch: Your %name% and confirmation %name% do not match.
+verifyemailaddress: A verification link has been sent to your email account . Please click on it to verify your email address.

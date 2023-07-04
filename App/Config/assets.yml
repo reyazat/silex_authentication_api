@@ -1,0 +1,11 @@
+assets:
+    assets.version: "v1"
+    assets.version_format: "%s?version=%s"
+    assets.named_packages:
+        css:
+            version: "css2"
+            base_path: ""
+        images:
+            base_urls:
+                1: "http://www.myweb.com/"
+                

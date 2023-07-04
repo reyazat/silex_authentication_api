@@ -1,0 +1,19 @@
+mail:
+    smtp:    
+        mail.host: mail.host.local
+        mail.port: 25
+        mail.username: ""
+        mail.password: ""
+        # ('tls', 'ssl', or null)
+        mail.encryption: null
+        # ('plain', 'login', 'cram-md5', or null)
+        mail.auth_mode: null
+        # Disabling Sending
+        mail.disable_delivery:  true
+
+    mailgun:
+        API_Key: "key-4793ca60e213d36f9e6e4c4e0f7bc8ab"
+        API_Base_URL: "https://api.mailgun.net"
+        domain: "mailg.smartysoftware.net"
+        From: "Order Smarty <ordersmarty@mailg.smartysoftware.net>"
+        Reply: "studio@smartystudio.co.uk"

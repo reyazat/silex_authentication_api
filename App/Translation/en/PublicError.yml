@@ -1,0 +1,88 @@
+##https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+10201: Billing agreement canceled
+100: Continue
+101: Switching Protocols
+103: Early Hints
+200: OK
+201: Created
+202: Accepted
+203: Non-Authoritative Information
+204: No Content
+205: Reset Content
+206: Partial Content
+300: Multiple Choices
+301: Moved Permanently
+302: Found
+303: See Other
+304: Not Modified
+307: Temporary Redirect
+308: Permanent Redirect
+400: Bad Request
+401: Unauthorized
+402: Payment Required
+403: Forbidden
+404: Not Found
+405: Method Not Allowed
+406: Not Acceptable
+407: Proxy Authentication Required
+408: Request Timeout
+409: Conflict
+410: Gone
+411: Length Required
+412: Precondition Failed
+413: Payload Too Large
+414: URI Too Long
+415: Unsupported Media Type
+416: Range Not Satisfiable
+417: Expectation Failed
+418: I'm a teapot
+422: Unprocessable Entity
+425: Too Early
+426: Upgrade Required
+428: Precondition Required
+429: Too Many Requests
+431: Request Header Fields Too Large
+451: Unavailable For Legal Reasons
+500: Internal Server Error
+501: Not Implemented
+502: Bad Gateway
+503: Service Unavailable
+504: Gateway Timeout
+505: HTTP Version Not Supported
+506: Variant Also Negotiates
+507: Insufficient Storage
+508: Loop Detected
+510: Not Extended
+511: Network Authentication Required
+UnexpectedError: Sorry, an unexpected error occurred. please contact support. Error code `%code%`.
+UnexpectedErrorRetry: Sorry, an unexpected error occurred. please try again.
+InvalidParametrs: The request is missing a required parameter, includes an invalid parameter value.Please check the `%name%` parameter.
+AccessDenied: You are not permitted to access the requested URL.
+RecaptchaExpired: Sorry!Verification expired,Please verify again.
+NotfoundEmail: Sorry, we do not recognise that email address.
+InvalidEmail: Please enter a valid email address.
+RequiredEmpty: Some required fields are empty or contain an improper value . Please check the %name%.
+MaxFileSize: Our web service supports maximum messages size of 20MB.
+EqualPass: Oops! Password does not matches.
+IncorrectAnswer: one or more answers to your security question are incorrect .check your answer and try again.
+CodeIncorrect: The code you entered may not be correct or may no longer be valid. Please check your entry.
+SuccessSend: Queued. Thank you.
+InvalidDate: Invalid datetime format . It Supports all formats PHP DateTime.
+RequestLock: This request is queued, you can not deleted.
+RequestExist: This request does not exist.
+RequestDel: This request has been successfully deleted.
+AlreadyExists: This %name% already exists.
+invalidCode: The code you entered is invalid.
+expiredCode: The code you entered is expired.
+qualifiedCode: You qualified for money-saving offer!
+UnavailableCode: The code you entered is Unavailable for this product.
+EmptySecurityQuestions: You have not any security questions in your profile .
+MaximumRequestAttempt: You have reached the maximum allowed request.Please try again in next few minutes.
+EmptyUser: We have not any user with this email address.
+WrongLogin: Invalid username or password.
+Failedresend: Failed to re-send invitation. Please wait %time% minutes and then try again.
+ExistInvite: Invite with same email already exist in invite list.
+ExistSame: Same email already exist in User list.
+Unableinvitation: Unable to accept invitation.
+ResetMail: We have e-mailed your password reset code!
+MinLength: Minimum length is `%length%` character

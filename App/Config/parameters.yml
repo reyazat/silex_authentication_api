@@ -1,0 +1,42 @@
+parameters:
+    #--- Seassion passwords
+    sessPass: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.bbHs5_xfhZAEFVA7B1EFQgMF0eyT6T5n8Lu49Bt24xU"
+    #--- TimeZone: UTC, Europe/Kiev...
+    timezone: UTC
+    DS : "/"
+    #--- Debug: true, false ---
+    debug: true
+   
+    #--- Database parameters ---
+    mysql_params:
+         driver     : "mysql"
+         host       : "localhost"
+         database   : "orderlogin"
+         username   : "root"
+         password   : "Local@DB"
+         charset    : "utf8"
+         collation  : "utf8_general_ci"
+         prefix     : "ap_"
+         key        : "Ordersmarty_login@2020#$"
+
+
+    redis_params:
+
+        host: ""
+        port: 6379
+        password: ""
+
+    usertype_list:
+        0: Admin
+        1: Owner
+        2: Cashier
+
+    #---------MonoLog-----------
+    monolog:
+        chanels:
+            1: "sql"
+            2: "debug"
+        mailer:
+            email: "itmanager@bfsc.co.uk"
+            subject: "PHP error_log message"
+            from: "itmanager@smartysoftware.net"
