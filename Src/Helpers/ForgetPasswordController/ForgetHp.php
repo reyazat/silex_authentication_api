@@ -114,7 +114,7 @@ class ForgetHp
 							}
 							$key = $this->app['helper']('CryptoGraphy')->randomPassword();
 							$this->app['cache']->store('resetpass_'.$key,$this->app['helper']('Utility')->encodeJson($getmethods['data']), 86400);
-							$email_data['to_variables'] = array('key'=>$key,'url' => $this->app['config']['webservice']['view'] . 'forget/email/' . $key, 'softwarename'=>$this->app['config']['software']['name'], 'emailsupport' => $this->app['config']['software']['global_email']);
+							$email_data['to_variables'] = array('key'=>$key, 'emailsupport' => $this->app['config']['software']['global_email']);
             
 							$email_data['to'] = $getmethods['data']['username'];
 							$email_data['subject'] = 'Reset Your Password - '.$this->app['config']['software']['name'];
@@ -266,7 +266,7 @@ class ForgetHp
 								$email_data['content'] = $file->getContents();
 							}
 							$name = explode('@',$username);
-							$email_data['to_variables'] = array('name'=>$name[0], 'softwarename'=>$this->app['config']['software']['name'],'emailsupport' => $this->app['config']['software']['global_email']);
+							$email_data['to_variables'] = array('name'=>$name[0], 'emailsupport' => $this->app['config']['software']['global_email']);
 							$email_data['to'] = $username;
 							$email_data['subject'] = 'Password change for your account - '.$this->app['config']['software']['name'];
 							$this->app['helper']('SendMail')->sendMessage($email_data);

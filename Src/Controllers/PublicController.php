@@ -26,7 +26,6 @@ class PublicController implements ControllerProviderInterface
 		$index->post("/signup", [$this, 'signupController']);
 		$index->get("/verify", [$this, 'verifyTokenController']);
 		$index->get("/signup/verify/{key}", [$this, 'verifyEmailController']);
-		$index->post("/signup/resend/verifyemail", [$this, 'resendVerifyEmailController']);
 		
 		$index->post("/invite", [$this, 'addInviteController']);
 		$index->get("/invite", [$this, 'getAllInviteController']);
@@ -48,10 +47,6 @@ class PublicController implements ControllerProviderInterface
 		$userController = new UserController($this->app);
 		$userController->addRoutes($index);
 		
-		// subdomain controller
-		$subdomainController = new SubdomainController($this->app);
-		$subdomainController->addRoutes($index);
-		
 		return $index;
 	}	
 	public function readme(Request $request){
@@ -67,9 +62,9 @@ class PublicController implements ControllerProviderInterface
 		return '<link href="'.$this->app['baseUrl'].'Css/readme.css" rel="stylesheet" type="text/css">'.$contents ;
     }
 	
-	public function verifyEmailController($key = '',Request $request)
-	{	$credential = $request->headers->get('credential');
-		$payLoad = $this->app['helper']('PublicController_LoginHp')->verifyEmail($key,$credential);
+	public function verifyEmailController($key = '')
+	{
+		$payLoad = $this->app['helper']('PublicController_LoginHp')->verifyEmail($key);
 		return setResponse($payLoad);
 	}
 	public function verifyTokenController(Request $request)
@@ -81,18 +76,6 @@ class PublicController implements ControllerProviderInterface
 		return setResponse($payLoad);
 		
 	}
-	
-	public function resendVerifyEmailController(Request $request)
-	{
-
-		$credential = $request->headers->get('credential');
-		
-		$params = $this->app['helper']('RequestParameter')->postParameter();
-		$payLoad = $this->app['helper']('PublicController_LoginHp')->resendVerifyEmail($credential, $params);
-
-		return setResponse($payLoad);
-	}
-	
 
 	public function signinController(Request $request)
 	{

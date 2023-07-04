@@ -1,0 +1,42 @@
+{
+    "require": {
+        "silex/silex": "^2.2",
+        "symfony/var-dumper": "^3.4",
+        "monolog/monolog": "^1.25",
+        "symfony/translation": "^3.4",
+        "symfony/config": "^3.4",
+        "symfony/yaml": "^3.4",
+        "knplabs/console-service-provider": "^2.2",
+        "symfony/stopwatch": "^3.4",
+        "predis/service-provider": "^2.0",
+        "illuminate/database": "^5.5",
+        "rmccue/requests": "^1.7",
+        "erusev/parsedown": "^1.7",
+        "erusev/parsedown-extra": "^0.8.1",
+        "symfony/filesystem": "^3.4",
+        "symfony/finder": "^3.4",
+        "symfony/validator": "^3.4",
+        "illuminate/pagination": "^5.5",
+        "illuminate/events": "^5.5",
+        "ramsey/uuid": "^3.9",
+        "moust/silex-cache": "^2.0",
+        "layershifter/tld-database": "^1.0",
+        "symfony/security-csrf": "^3.4",
+        "gumlet/php-image-resize": "^2.0",
+        "firebase/php-jwt": "^5.2",
+        "mailgun/mailgun-php": "^2.8",
+        "kriswallsmith/buzz": "^0.16.1",
+        "nyholm/psr7": "^0.2.3",
+        "php-http/guzzle6-adapter": "^1.1",
+        "php-http/message": "^1.7"
+    },
+"autoload":{
+"psr-4":{
+"Controllers\\": "Src/Controllers",
+"Providers\\": "Src/Providers",
+"Helper\\": "Src/Helpers",
+"Component\\": "Src/Component",
+"Models\\": "Src/Models",
+"Console\\": "Src/Console"}
+}
+}

@@ -22,28 +22,14 @@ class UserModel extends \Illuminate\Database\Eloquent\Model
 		$fields = [];
 		if (array_key_exists('firstname', $params)) {
 			$fname = $this->app['helper']('Utility')->clearField($params['firstname']);
-			$fname = ($this->app['helper']('Utility')->notEmpty($fname))?$this->app['helper']('DataTable_TableInitField')->encryptFieldBase64($fname):NULL;
+			$fname = $this->app['helper']('DataTable_TableInitField')->encryptFieldBase64($fname);
 			$fields['firstname'] = $fname;
 		}
 
 		if (array_key_exists('lastname', $params)) {
 			$lname = $this->app['helper']('Utility')->clearField($params['lastname']);
-			$lname = ($this->app['helper']('Utility')->notEmpty($lname))?$this->app['helper']('DataTable_TableInitField')->encryptFieldBase64($lname):NULL;
+			$lname = $this->app['helper']('DataTable_TableInitField')->encryptFieldBase64($lname);
 			$fields['lastname'] = $lname;
-		}
-		
-		if (array_key_exists('company_name', $params)) {
-			$company_name = $this->app['helper']('Utility')->clearField($params['company_name']);
-			$company_name = ($this->app['helper']('Utility')->notEmpty($company_name))?$this->app['helper']('DataTable_TableInitField')->encryptFieldBase64($company_name):NULL;
-			$fields['company_name'] = $company_name;
-		}
-		
-		if (array_key_exists('site_id', $params)) {
-			$fields['site_id'] = $this->app['helper']('Utility')->clearField($params['site_id']);
-		}
-		
-		if (array_key_exists('parent_id', $params)) {
-			$fields['parent_id'] = $this->app['helper']('Utility')->clearField($params['parent_id']);
 		}
 
 		if (array_key_exists('username', $params)) {
@@ -61,18 +47,16 @@ class UserModel extends \Illuminate\Database\Eloquent\Model
 
 		if (array_key_exists('mobile_number', $params)) {
 			$mobile = $this->app['helper']('Utility')->clearField($params['mobile_number']);
-			$mobile = ($this->app['helper']('Utility')->notEmpty($mobile))?$this->app['helper']('DataTable_TableInitField')->encryptField($mobile):NULL;
+			$mobile = $this->app['helper']('DataTable_TableInitField')->encryptField($mobile);
 			$fields['mobile_number'] = $mobile;
 		}
 
 		if (array_key_exists('date_of_birth', $params)) {
-			$date_of_birth = $this->app['helper']('Utility')->clearField($params['date_of_birth']);
-			if($this->app['helper']('Utility')->notEmpty($date_of_birth) && $this->app['helper']('DateTimeFunc')->isDate($date_of_birth)) $fields['date_of_birth'] = $date_of_birth;			
+			$fields['date_of_birth'] = $this->app['helper']('Utility')->clearField($params['date_of_birth']);
 		}
 		
 		if (array_key_exists('due_date', $params)) {
-			$due_date = $this->app['helper']('Utility')->clearField($params['due_date']);
-			if($this->app['helper']('Utility')->notEmpty($due_date) && $this->app['helper']('DateTimeFunc')->isDate($due_date)) $fields['due_date']= $due_date;
+			$fields['due_date'] = $this->app['helper']('Utility')->clearField($params['due_date']);
 		}
 		
 		if (array_key_exists('id_pack', $params)) {
@@ -81,7 +65,7 @@ class UserModel extends \Illuminate\Database\Eloquent\Model
 
 		if (array_key_exists('address', $params)) {
 			$address = $this->app['helper']('Utility')->clearField($params['address']);
-			$address = ($this->app['helper']('Utility')->notEmpty($address))?$this->app['helper']('DataTable_TableInitField')->encryptFieldBase64($address):NULL;
+			$address = $this->app['helper']('DataTable_TableInitField')->encryptFieldBase64($address);
 			$fields['address'] = $address;
 		}
 
@@ -91,7 +75,7 @@ class UserModel extends \Illuminate\Database\Eloquent\Model
 
 		if (array_key_exists('country', $params)) {
 			$country = $this->app['helper']('Utility')->clearField($params['country']);
-			$country = ($this->app['helper']('Utility')->notEmpty($country))?$country:NULL;
+			// $country = $this->app['helper']('DataTable_TableInitField')->encryptFieldBase64($country);
 			$fields['country'] = $country;
 		}
 
@@ -101,7 +85,6 @@ class UserModel extends \Illuminate\Database\Eloquent\Model
 
 		if (array_key_exists('verified', $params)) {
 			$fields['verified'] = $this->app['helper']('Utility')->clearField($params['verified']);
-			$fields['verified'] = (int) $fields['verified'];
 		}
 
 		if (array_key_exists('unique_token', $params)) {
@@ -115,6 +98,8 @@ class UserModel extends \Illuminate\Database\Eloquent\Model
 		if (array_key_exists('user_settings', $params)) {
 			if ($this->app['helper']('Utility')->isJSON($params['user_settings'])) {
 				$fields['user_settings'] = $params['user_settings'];
+				// $fields['user_settings'] = $this->app['helper']('Utility')->decodeJson($params['user_settings']);
+
 			} else
 				$fields['user_settings'] = NULL;
 		}
@@ -156,11 +141,8 @@ class UserModel extends \Illuminate\Database\Eloquent\Model
 
 			$where = $this->app['helper']('DataTable_TableInitField')->searchEncryptField('username', $userName);
 			$duplicates = UserModel::select('user_id')->whereRaw($where)->first();
-			if($this->app['helper']('Utility')->notEmpty($duplicates))
-				$duplicates = $duplicates->toArray();
-				$payLoad = ['status' => 'Success', 'message' => '', 'code'=>200, 'data' => $duplicates];
-			
-			
+
+			$payLoad = ['status' => 'Success', 'message' => '', 'code'=>200, 'data' => $duplicates];
 		} else {
 
 			$msg = $this->app['translator']->trans('InvalidParametrs', array('%name%' => 'Username'));
@@ -169,7 +151,6 @@ class UserModel extends \Illuminate\Database\Eloquent\Model
 
 		return $payLoad;
 	}
-	
 
 	public function signUp($params = [])
 	{
@@ -191,17 +172,16 @@ class UserModel extends \Illuminate\Database\Eloquent\Model
 			
 			if ($checkDuplicates['status'] === 'Success') {
 
-				if ( isset($checkDuplicates['data']) && $this->app['helper']('Utility')->notEmpty($checkDuplicates['data'])) { // duplicate user
+				if (count($checkDuplicates['data']) > 0) { // duplicate user
 
 					$msg = $this->app['translator']->trans('exist', array('%name%' => 'Username'));
 					$payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 409];
 				} else {
+					
 					$this->app['load']('Models_InviteModel')->removeInviteByEmail($params['username']);
 
 					$fields['user_id'] = $this->makeUserIdentifier($params['username']);
-					$fields['user_encode'] = strtolower($this->app['helper']('CryptoGraphy')->urlsafe_b64encode($fields['user_id']));
 					$getUuid = $this->app['helper']('CryptoGraphy')->createUUID();
-					
 					$fields['unique_token'] = str_replace('-', '', $getUuid['uuid']);
 					$fields['created_at'] = $this->app['helper']('DateTimeFunc')->nowDateTime();
 
@@ -238,14 +218,6 @@ class UserModel extends \Illuminate\Database\Eloquent\Model
 				unset($fields['user_id']);
 				unset($fields['unique_token']);
 				UserModel::where('user_id', '=', $idUser)->update($fields);
-				if(
-					isset($fields['site_id']) && $this->app['helper']('Utility')->notEmpty($fields['site_id']) ||
-					isset($fields['user_type']) && $this->app['helper']('Utility')->notEmpty($fields['user_type']) 
-				  ){
-					$credential = $this->app['request_content']->headers->get('credential');
-					$cacheId = $this->app['helper']('CryptoGraphy')->urlsafe_b64encode($idUser . '-' . $credential);
-					$this->app['cache']->delete($cacheId);
-				}
 				$payLoad = $this->findById($idUser);
 				if($payLoad['status']=='Success'){
 					$msg = $this->app['translator']->trans('edit', array('%name%' => 'User'));
@@ -266,11 +238,10 @@ class UserModel extends \Illuminate\Database\Eloquent\Model
 			$payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
 		} else {
 
-			$selectField = ['user_id', 'password','unique_token', 'user_type','site_id','parent_id','verified'];
+			$selectField = ['user_id', 'password','unique_token', 'user_type'];
 			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptField('username');
 			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('firstname');
 			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('lastname');
-			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('company_name');
 			$selectField[] = 'security_questions';
 
 			$where = $this->app['helper']('DataTable_TableInitField')->searchEncryptField('username', $username);
@@ -318,12 +289,11 @@ class UserModel extends \Illuminate\Database\Eloquent\Model
 			$payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
 		} else {
 
-			$selectField = ['user_id','date_of_birth', 'gender', 'follower_count', 'following_count', 'country', 'user_settings' , 'user_type','id_pack','due_date','site_id','parent_id'];
+			$selectField = ['user_id','date_of_birth', 'gender', 'follower_count', 'following_count', 'country', 'user_settings' , 'user_type','id_pack','due_date'];
 
 			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptField('username');
 			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('firstname');
 			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('lastname');
-			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('company_name');
 			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('address');
 			// $selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('country');
 			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptField('mobile_number');
@@ -347,12 +317,11 @@ class UserModel extends \Illuminate\Database\Eloquent\Model
 	public function findByIds($usersids = '')
 	{
 		$payLoad = [];
-		$selectField = ['id','user_id',  'user_type','site_id','parent_id', 'follower_count'];
+		$selectField = ['id','user_id',  'user_type', 'follower_count'];
 
 		$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptField('username');
 		$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('firstname');
 		$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('lastname');
-		$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('company_name');
 		$arrayuserids = explode(',',$usersids);
 		$findUsers = UserModel::select($selectField)->whereIn('user_id', $arrayuserids)->get();
 		if(!empty($findUsers)){ // user found
@@ -376,12 +345,11 @@ class UserModel extends \Illuminate\Database\Eloquent\Model
 			$payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
 		} else {
 
-			$selectField = ['user_id','date_of_birth', 'gender', 'follower_count', 'following_count', 'country', 'user_settings' , 'user_type','id_pack','due_date','site_id','parent_id'];
+			$selectField = ['user_id','date_of_birth', 'gender', 'follower_count', 'following_count', 'country', 'user_settings' , 'user_type','id_pack','due_date'];
 
 			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptField('username');
 			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('firstname');
 			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('lastname');
-			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('company_name');
 			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('address');
 			// $selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('country');
 			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptField('mobile_number');
@@ -413,20 +381,18 @@ class UserModel extends \Illuminate\Database\Eloquent\Model
 			});
 		}
 
-		$selectField = ['id','user_id',  'user_type', 'follower_count','site_id','parent_id'];
+		$selectField = ['id','user_id',  'user_type', 'follower_count'];
 		$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptField('username');
 		$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('firstname');
 		$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('lastname');
-		$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptFieldBase64('company_name');
-		if($orderBy == 'userid')$orderBy ='id'; elseif($orderBy == 'firstname')$orderBy ='firstname'; elseif($orderBy == 'lastname')$orderBy ='lastname'; elseif($orderBy == 'companyname')$orderBy ='company_name'; elseif($orderBy == 'user_type')$orderBy ='user_type'; else $orderBy = 'id';
+		if($orderBy == 'userid')$orderBy ='id'; elseif($orderBy == 'firstname')$orderBy ='firstname'; elseif($orderBy == 'lastname')$orderBy ='lastname'; elseif($orderBy == 'user_type')$orderBy ='user_type'; else $orderBy = 'id';
 		
 		$fetch = UserModel::select($selectField);
 		if(isset($params['user_type']) && !empty($params['user_type'])){
 			$fetch = $fetch->where('user_type','=',$params['user_type']);
 		}
 
-		$fetch = $fetch->where('user_id','=',$this->app['oauth']['id_user']);
-		$fetch = $fetch->orWhere('parent_id','=',$this->app['oauth']['id_user']);
+		$fetch = $fetch->where('user_id','<>',$this->app['oauth']['id_user']);
 		$fetch = $fetch->orderBy($orderBy, $sortType);
 		if($paginate){
 			$paginateResult = $fetch->paginate($length)->toArray();

@@ -20,6 +20,10 @@ class LoginHp
     {	
         $payLoad = [];
         if (!$this->app['helper']('Utility')->notEmpty($credential) || 
+            !isset($params['username']) ||
+            (isset($params['username']) && !$this->app['helper']('Utility')->notEmpty($params['username'])) ||
+            !isset($params['password']) ||
+            (isset($params['password']) && !$this->app['helper']('Utility')->notEmpty($params['password'])) ||
             !isset($params['device_token']) ||
             (isset($params['device_token']) && !$this->app['helper']('Utility')->notEmpty($params['device_token'])) ||
             !isset($params['device_type']) ||
@@ -27,20 +31,9 @@ class LoginHp
 
         ) {
 
-            $msg = $this->app['translator']->trans('InvalidParametrs', array('%name%' => 'Credential, Devcie Token, Device Type'));
+            $msg = $this->app['translator']->trans('InvalidParametrs', array('%name%' => 'Credential, Username, Password,Devcie Token, Device Type'));
             $payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
-        } else if (!isset($params['username']) ||
-            (isset($params['username']) && !$this->app['helper']('Utility')->notEmpty($params['username'])) ||
-            !isset($params['password']) ||
-            (isset($params['password']) && !$this->app['helper']('Utility')->notEmpty($params['password'])) ||
-			!isset($params['company_name']) ||
-            (isset($params['company_name']) && !$this->app['helper']('Utility')->notEmpty($params['company_name']))
-
-        ) {
-
-            $msg = $this->app['translator']->trans('InvalidParametrs', array('%name%' => 'Username, Password, Company Name'));
-            $payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
-        }else if (isset($params['username']) && !$this->app['helper']('Utility')->isEmail($params['username'])) {
+        } else if (isset($params['username']) && !$this->app['helper']('Utility')->isEmail($params['username'])) {
             $msg = $this->app['translator']->trans('InvalidParametrs', array('%name%' => 'Email'));
             $payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
         } else {
@@ -51,21 +44,14 @@ class LoginHp
 				unset($params['id_pack']);
 				unset($params['due_date']);
 				unset($params['user_type']);
-				
+				file_put_contents('222.txt', serialize($params));
 				$payLoad = $this->app['load']('Models_UserModel')->signUp($params);
 				if ($payLoad['status'] == 'Success') {
 					$params['user_id'] = $payLoad['data']['user_id'];
-					$data = $payLoad['data'];
-					$this->app['helper']('Subdomain_SubdomainHp')->addsubdomain($params);
-			
+						
 					$add_device = $this->app['load']('Models_DeviceTokenModel')->addDeviceToken($params);
 					if ($add_device['status'] == 'Success') {
-						$payLoad = $this->verificationEmail($params);
-						
-						if($payLoad['status'] === 'Success'){
-							$msg = $this->app['translator']->trans('verifyemailaddress');
-							$payLoad = ['status' => 'Success', 'message' => $msg, 'code' => 200 , 'data'=>$data];
-						}
+						$this->verificationEmail($params);
 					}
 				}
 			}else { // error in get source
@@ -90,7 +76,7 @@ class LoginHp
 			foreach ($finder as $file) {
 				$email_data['content'] = $file->getContents();
 			}
-			$email_data['to_variables'] = array('url' => $this->app['config']['webservice']['view'] . 'signup/verify/' . $key,'softwarename'=>$this->app['config']['software']['name'],'emailsupport' => $this->app['config']['software']['global_email']);
+			$email_data['to_variables'] = array('url' => $this->app['baseUrl'] . 'signup/verify/' . $key,'emailsupport' => $this->app['config']['software']['global_email']);
             
             $email_data['to'] = $username;
             $email_data['subject'] = 'Verification Email - '.$this->app['config']['software']['name'];
@@ -138,113 +124,29 @@ class LoginHp
 
                 $findUser = $this->app['load']('Models_UserModel')->findUserByEmail($userName);
                 if ($findUser['status'] === 'Success') {
-							
+
                     $verifyPass = $this->app['helper']('CryptoGraphy')->verifyPassword($pass, $findUser['data']['password']);
                     if ($verifyPass) { // password match
 
                         $userData = $findUser['data'];
-						if(isset($userData['verified']) && $this->app['helper']('Utility')->notEmpty($userData['verified'])){
-							// get login source
-							$getLoginSource = $this->app['load']('Models_CredentialModel')->getSource($credential);
-							if ($getLoginSource['status'] === 'Success') {
-								if($userData['user_type'] === 'Owner'){
-									$subuserid = $userData['user_id'];
-								}else{
-									$subuserid = $userData['parent_id'];
-								}
-								$getDetalisSubdomain = $this->app['helper']('Subdomain_SubdomainHp')->getSubdomainByUserId($subuserid);
-								if($getDetalisSubdomain['code'] == 200){
-									$userData['last_modify'] = $getDetalisSubdomain['data']['last_modify'];
-									$userData['id_subdomain'] = $getDetalisSubdomain['data']['id'];
-								}
-								
-									
-								$params['user_id'] = $userData['user_id'];
-								$add_device = $this->app['load']('Models_DeviceTokenModel')->addDeviceToken($params);
-								$userData['source'] = $getLoginSource['data']['source'];
-								$jwt = $this->app['helper']('JWTHp')->createToken($userData);
-								
-								$cacheId = $this->app['helper']('CryptoGraphy')->urlsafe_b64encode($userData['user_id'] . '-' . $credential);
 
-								$this->app['cache']->store($cacheId, $jwt);
-								unset($userData['password']);
-								unset($userData['unique_token']);
-								unset($userData['security_questions']);
-								$userData['token'] = $jwt;
-								$payLoad = ['status' => 'Success', 'message' => '', 'code'=>200, 'data' =>$userData];
-							} else { // error in get login source
-								$payLoad = $getLoginSource;
-							}
-						}else{
-							$msg = $this->app['translator']->trans('notverified');
-							$payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 404];
-						}
-                    } else { // password not match
+                        // get login source
+                        $getLoginSource = $this->app['load']('Models_CredentialModel')->getSource($credential);
+                        if ($getLoginSource['status'] === 'Success') {
 
-                        $msg = $this->app['translator']->trans('WrongLogin');
-						$payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
-                    }
-                } else {
-                    $msg = $this->app['translator']->trans('WrongLogin');
-					$payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
-                }
-            }
-        }
+							$params['user_id'] = $userData['user_id'];
+							$add_device = $this->app['load']('Models_DeviceTokenModel')->addDeviceToken($params);
+							$userData['source'] = $getLoginSource['data']['source'];
+                            $jwt = $this->app['helper']('JWTHp')->createToken($userData);
+	
+                            $cacheId = $this->app['helper']('CryptoGraphy')->urlsafe_b64encode($userData['user_id'] . '-' . $credential);
 
-        return $payLoad;
-    }
-
-     
-
-    public function resendVerifyEmail($credential = '', $params = '')
-	{	$payLoad = [];
-		if (!$this->app['helper']('Utility')->notEmpty($credential)) {
-            $msg = $this->app['translator']->trans('InvalidParametrs', array('%name%' => 'Credential'));
-            $payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
-        } else {
-
-            if (
-                !isset($params['username']) ||
-				(isset($params['username']) && !$this->app['helper']('Utility')->notEmpty($params['username'])) ||
-				!isset($params['password']) ||
-				(isset($params['password']) && !$this->app['helper']('Utility')->notEmpty($params['password']))
-            ) {
-
-                $msg = $this->app['translator']->trans('InvalidParametrs', array('%name%' => 'Username, Password'));
-                $payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
-				
-            } else if(!isset($params['confirmusername']) ||
-					  (isset($params['confirmusername']) && !$this->app['helper']('Utility')->notEmpty($params['confirmusername'])) || ($params['confirmusername'] !== $params['username'])
-					 ) {
-				$msg = $this->app['translator']->trans('donotmatch', array('%name%' => 'e-mail'));
-                $payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
-				
-			}else{
-				
-
-                $userName = $this->app['helper']('Utility')->clearField($params['username']);
-                $pass = $this->app['helper']('Utility')->clearField($params['password']);
-
-                $findUser = $this->app['load']('Models_UserModel')->findUserByEmail($userName);
-                if ($findUser['status'] === 'Success') {
-							
-                    $verifyPass = $this->app['helper']('CryptoGraphy')->verifyPassword($pass, $findUser['data']['password']);
-                    if ($verifyPass) { // password match
-
-						// get login source
-						$getLoginSource = $this->app['load']('Models_CredentialModel')->getSource($credential);
-						if ($getLoginSource['status'] === 'Success') {
-
-							$payLoad =$this->verificationEmail($findUser['data']);
-							if($payLoad['status'] === 'Success'){
-								$msg = $this->app['translator']->trans('verifyemailaddress');
-								$payLoad = ['status' => 'Success', 'message' => $msg, 'code' => 200];
-							}
-
-						} else { // error in get login source
-							$payLoad = $getLoginSource;
-						}
-						
+                            $this->app['cache']->store($cacheId, $jwt);
+                           
+                            $payLoad = ['status' => 'Success', 'message' => '', 'code'=>200, 'data' => ['token' => $jwt, 'user_id' => $userData['user_id'], 'user_type' => $userData['user_type']]];
+                        } else { // error in get login source
+                            $payLoad = $getLoginSource;
+                        }
                     } else { // password not match
 
                         $msg = $this->app['translator']->trans('WrongLogin');
@@ -258,10 +160,10 @@ class LoginHp
         }
 
         return $payLoad;
-		
-	}
+    }
 
      
+
     public function verifyToken($credential = '', $token = '')
     {
 
@@ -273,42 +175,36 @@ class LoginHp
             $msg = $this->app['translator']->trans('InvalidParametrs', array('%name%' => 'Credential, Token'));
             $payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
         } else {
-			$payLoad = $this->app['load']('Models_CredentialModel')->getSource($credential);
-			if ($payLoad['status'] === 'Success') {
-				$checkAccess = $this->app['helper']('JWTHp')->verifyToken($token);
 
-				if ($checkAccess['status'] === 'Success') {
-					$payLoad = (['status' => 'Success', 'message' => '', 'code'=>200, 'data' => $checkAccess['data']]);
-				} else {
-					$payLoad = $checkAccess;
-				}
-			}
+            $checkAccess = $this->app['helper']('JWTHp')->verifyToken($token);
+
+            if ($checkAccess['status'] === 'Success') {
+                $payLoad = (['status' => 'Success', 'message' => '', 'code'=>200, 'data' => $checkAccess['data']]);
+            } else {
+                $payLoad = $checkAccess;
+            }
         }
 
         return $payLoad;
     }
 
-    public function verifyEmail($key = '',$credential='')
+    public function verifyEmail($key = '')
     {
-        if (!$this->app['helper']('Utility')->notEmpty($credential) || !isset($key) || (isset($key) && !$this->app['helper']('Utility')->notEmpty($key))) {
-            $msg = $this->app['translator']->trans('InvalidParametrs', array('%name%' => 'Credential,Token'));
+        if (!isset($key) || (isset($key) && !$this->app['helper']('Utility')->notEmpty($key))) {
+            $msg = $this->app['translator']->trans('InvalidParametrs', array('%name%' => 'Token'));
             $payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
         } else {
-			$payLoad = $this->app['load']('Models_CredentialModel')->getSource($credential);
-			if ($payLoad['status'] === 'Success') {
-			
-				$payLoad = $this->app['load']('Models_UserModel')->findUserByToken($key);
-
-				if ($payLoad['status'] == 'Success') {
-
-					$params['verified'] = 1;
-					$payLoad = $this->app['load']('Models_UserModel')->updateUserInfo($payLoad['data']['user_id'], $params);
-					$msg = $this->app['translator']->trans('Verification');
-					if ($payLoad['status'] == 'Success')
-						$payLoad = ['status' => 'Success', 'message' => $msg, 'code' => 200,'data'=>['user_id'=>$payLoad['data']['user_id'],'user_type'=>$payLoad['data']['user_type']]];
-
-				}
-			}
+            $payLoad = $this->app['load']('Models_UserModel')->findUserByToken($key);
+           
+            if ($payLoad['status'] == 'Success') {
+               
+                $params['verified'] = 1;
+                $payLoad = $this->app['load']('Models_UserModel')->updateUserInfo($payLoad['data']['user_id'], $params);
+                $msg = $this->app['translator']->trans('Verification');
+                if ($payLoad['status'] == 'Success')
+					$payLoad = ['status' => 'Success', 'message' => $msg, 'code' => 200];
+               
+            }
         }
         return $payLoad;
     }
@@ -329,7 +225,7 @@ class LoginHp
 
 					$payLoad = $this->app['load']('Models_InviteModel')->addInvite($params);
 					if ($payLoad['code'] === 200) {
-						$this->invitationEmail($payLoad['data']);
+						$this->invitationEmail($params);
 					}				
 			}else{
 				
@@ -347,6 +243,7 @@ class LoginHp
 		$payLoad = $this->app['load']('Models_InviteModel')->getAllInvite($params);
 		$payLoad['pagination']['usertype_list'] = $this->app['config']['parameters']['usertype_list'];
 		$payLoad['pagination']['invite_status'] = ['Active', 'Used', 'Inactive'];
+		$payLoad['pagination']['invite_status_color'] = ['Active'=>'#000', 'Used'=>'#000', 'Inactive'=>'#000'];
 		
         return $payLoad;
 	}
@@ -418,13 +315,7 @@ class LoginHp
         ) {
             $msg = $this->app['translator']->trans('InvalidParametrs', array('%name%' => 'Credential, Invite Code'));
             $payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
-        }elseif (
-			!isset($params['password']) ||
-			(isset($params['password']) && !$this->app['helper']('Utility')->notEmpty($params['password']))
-		) {
-			$msg = $this->app['translator']->trans('InvalidParametrs', array('%name%' => 'Password'));
-			$payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
-		} else{
+        }else{
 			 // get login source
 			$getLoginSource = $this->app['load']('Models_CredentialModel')->getSource($credential);
 			if ($getLoginSource['status'] === 'Success') {
@@ -434,14 +325,7 @@ class LoginHp
 				if($payLoad['status']=='Success'){
 					switch($payLoad['data']['status']){
 						case'Active' :
-							$params['username'] = $payLoad['data']['username'];
-							$params['user_type'] = $payLoad['data']['user_type'];
-							$params['parent_id'] = $payLoad['data']['owner_id'];
-							$params['site_id'] = $payLoad['data']['relation'];
-							$params['verified'] = 1;
-							$payLoad = $this->app['load']('Models_UserModel')->signUp($params);
-							
- 
+							$payLoad = $payLoad;
 						break;
 						case'Used' :
 							 $msg = $this->app['translator']->trans('Unableinvitation');
@@ -467,7 +351,8 @@ class LoginHp
 	public function invitationEmail($params = [])
     {
         $payLoad = [];
-        $findUser = $this->app['load']('Models_InviteModel')->findByCode($params['unique_code']);
+        $username = $this->app['helper']('Utility')->clearField($params['username']);
+        $findUser = $this->app['load']('Models_InviteModel')->findUserByEmail($username);
 		
         if ($findUser['status'] === 'Success') {
             $key = $findUser['data']['unique_code'];
@@ -478,9 +363,9 @@ class LoginHp
 			foreach ($finder as $file) {
 				$email_data['content'] = $file->getContents();
 			}
-			$email_data['to_variables'] = array('key'=>$key, 'url' => $this->app['config']['webservice']['view'] . 'signup?invitecode=' . $key,'softwarename'=>$this->app['config']['software']['name'],'emailsupport' => $this->app['config']['software']['global_email']);
+			$email_data['to_variables'] = array('key'=>$key, 'url' => $this->app['baseUrl'] . 'verifyinvitecode?invitecode=' . $key,'emailsupport' => $this->app['config']['software']['global_email']);
             
-            $email_data['to'] = $findUser['data']['username'];
+            $email_data['to'] = $username;
             $email_data['subject'] = 'You have been invited to join '.$this->app['config']['software']['name'];
          
             $payLoad = $this->app['helper']('SendMail')->sendMessage($email_data);

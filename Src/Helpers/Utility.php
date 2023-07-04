@@ -269,22 +269,6 @@ class Utility{
 		return $contents;
 		
 	}
-	
-	public function filtersubdomain($subdomain){
-		$subdomain = strtolower($subdomain);
-		$subdomain = nl2br($subdomain);
-		$subdomain = strip_tags($subdomain);
-		$subdomain = html_entity_decode($subdomain);
-		$subdomain = urldecode($subdomain);
-		$subdomain = $this->secureInput($subdomain);
-		$subdomain = preg_replace('/[^A-Za-z0-9-]/', '', $subdomain);
-		$subdomain = preg_replace('/ +/', ' ', $subdomain);
-		$subdomain = preg_replace('/-+/', '-', $subdomain);
-		$subdomain = stripslashes($subdomain);
-		
-		return $subdomain;
-		
-	}
 	public function secureInput($str)
     {	$str = $this->trm(preg_replace('/<(.)s(.)c(.)r(.)i(.)p(.)t/i', '', $str));
 		$str = $this->trm(preg_replace('/[\r\n]+/', '', $str));
@@ -562,29 +546,6 @@ class Utility{
         }
     }
 	
-	public function clearArray($data){
-		if($data == null)
-			return null;
-
-		if(is_array($data)){
-			return array_map(array($this,'clearArray'), $data);
-		}else return $this->clearFieldArray($data);
-	}
 	
-	public function clearFieldArray($value){
-		
-		$newVal = '';
-		//$newVal = $this->app->escape($value);
-		$newVal = strip_tags($value);
-		$newVal = trim($newVal);
-		$newVal = preg_replace('/\s+/', ' ', $newVal);
-		$newVal = preg_replace('/[\x00-\x1F\x7F-\xFF]/', '', $newVal);
-		$newVal = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/u', '', $newVal);
-		$newVal = preg_replace ( '/<(.)s(.)c(.)r(.)i(.)p(.)t/i','',$newVal );
-		$newVal = str_replace(';','',$newVal);
-
-		return $newVal;
-		
-	}
 	
 }

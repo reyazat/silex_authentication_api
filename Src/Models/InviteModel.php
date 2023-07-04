@@ -33,13 +33,6 @@ class InviteModel extends \Illuminate\Database\Eloquent\Model{
 		
 		if (array_key_exists('user_type', $params)) {
 			$fields['user_type'] = $this->app['helper']('Utility')->clearField($params['user_type']);
-			$fields['user_type'] = strtolower($fields['user_type']);
-			$fields['user_type'] = ucfirst($fields['user_type']);
-		}
-
-		if (array_key_exists('relation', $params)) {
-			$relation = $this->app['helper']('Utility')->clearField($params['relation']);
-			if($this->app['helper']('Utility')->notEmpty($relation)) $fields['relation'] = $relation;
 		}
 
 		return $fields;
@@ -63,24 +56,19 @@ class InviteModel extends \Illuminate\Database\Eloquent\Model{
 		} else {
 
 			$checkDuplicates = $this->checkDuplicate($params['username']);
-			
 			if ($checkDuplicates['status'] === 'Success') {
-				if (isset($checkDuplicates['data']) &&  !empty($checkDuplicates['data'])) { // duplicate user
+				if (count($checkDuplicates['data']) > 0) { // duplicate user
 					$msg = $this->app['translator']->trans('ExistInvite');
 					$payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 409];
 				} else {
 					$checkDuplicates = $this->app['load']('Models_UserModel')->checkDuplicate($params['username']);
 					
-					if ($checkDuplicates['status'] === 'Success' && !empty($checkDuplicates['data']) && is_array($checkDuplicates['data'])) {
+					if ($checkDuplicates['status'] === 'Success' && count($checkDuplicates['data']) > 0) {
 						$msg = $this->app['translator']->trans('ExistSame');
 						$payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 409];
 					
 					}else{
-						$fields['unique_code'] = $this->app['helper']('CryptoGraphy')->md5EncryptHash($this->app['helper']('CryptoGraphy')->randomPassword().$this->app['helper']('DateTimeFunc')->nowDateTime());
-						if(isset($fields['user_type']) && $fields['user_type'] == 'Admin'){
-							$fields['user_type'] == 'Owner';
-						}
-						$fields['owner_id'] = $this->app['oauth']['id_user'];
+						$fields['unique_code'] = $this->app['helper']('CryptoGraphy')->randomPassword();
 						$fields['created_at'] = $this->app['helper']('DateTimeFunc')->nowDateTime();
 
 						InviteModel::insertGetId($fields);
@@ -105,11 +93,7 @@ class InviteModel extends \Illuminate\Database\Eloquent\Model{
 		
 		if($this->existOneRow([['id', '=', $inviteid]])){
 			unset($fields['username']);
-			unset($fields['owner_id']);
 			unset($fields['unique_code']);
-			if(isset($fields['user_type']) && $fields['user_type'] == 'Admin'){
-				$fields['user_type'] == 'Owner';
-			}
 			InviteModel::where('id', '=', $inviteid)->update($fields);
 			$payLoad = $this->findById($inviteid);
 			if($payLoad['status']=='Success'){
@@ -129,7 +113,7 @@ class InviteModel extends \Illuminate\Database\Eloquent\Model{
 			$payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
 		} else {
 
-			$selectField = ['id','user_type', 'unique_code' ,'status','owner_id', 'relation','created_at'];
+			$selectField = ['id','user_type', 'status','created_at'];
 			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptField('username');
 
 			$find = InviteModel::select($selectField)->where('id', '=', $inviteid)->first();
@@ -155,7 +139,7 @@ class InviteModel extends \Illuminate\Database\Eloquent\Model{
 			$payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
 		} else {
 
-			$selectField = ['id','user_type', 'unique_code' ,'status','owner_id', 'relation' ,'created_at'];
+			$selectField = ['id','user_type', 'status','created_at'];
 			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptField('username');
 
 			$find = InviteModel::select($selectField)->where('unique_code', '=', $code)->first();
@@ -203,52 +187,34 @@ class InviteModel extends \Illuminate\Database\Eloquent\Model{
 	
 	public function getAllInvite($params = [])
 	{
-		$paginate = (isset($params['paginate']) ) ? (bool) $params['paginate'] : false;
+
 		$currentPage = (isset($params['currentPage']) && !empty($params['currentPage'])) ? $params['currentPage'] : 0;
 		$length = (isset($params['length']) && !empty($params['length'])) ? $params['length'] : 10;
 		$orderBy = (isset($params['orderBy']) && !empty($params['orderBy'])) ? $params['orderBy'] : 'id';
         $sortType = (isset($params['sortType']) && !empty($params['sortType'])) ? $params['sortType'] : 'Desc';
-		if($paginate){
-			Paginator::currentPageResolver(function () use ($currentPage) {
-				return $currentPage;
-			});
-		}
+		Paginator::currentPageResolver(function () use ($currentPage) {
+			return $currentPage;
+		});
 
 		$selectField = ['id','user_type', 'status','created_at'];
 		$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptField('username');
-	
-		$selectField[] = new raw("(select FROM_BASE64(CAST(AES_DECRYPT(`company_name`,UNHEX(SHA2('".$this->app['config']['parameters']['mysql_params']['key']."',512))) as CHAR(512))) `companyname` from ap_users where user_id = ap_invite_user.owner_id) as companyname");
 				
 		$fetch = InviteModel::select($selectField);
 		if(isset($params['user_type']) && !empty($params['user_type'])){
 			$fetch = $fetch->where('user_type','=',$params['user_type']);
 		}
-		$fetch = $fetch->where('owner_id','=',$this->app['oauth']['id_user']);
+
+
 		$fetch = $fetch->orderBy($orderBy, $sortType);
-		if($paginate){
-			$paginateResult = $fetch->paginate($length)->toArray();
-			if(!empty($paginateResult))
-				$returnResult = $paginateResult['data'] ;
-			else
-				$returnResult = [];
-			
-		}else{
-			$returnResult = $fetch->get();
-			if(!empty($returnResult))
-				$returnResult = $returnResult->toArray() ;
-			else
-				$returnResult = [];
-		}
+		$paginateResult = $fetch->paginate($length)->toArray();
 
 		$result = [];
-		if($paginate){
-			$result['total'] = $paginateResult['total'];
-			$result['currentPage'] = $paginateResult['current_page'];
-			$result['lastPage'] = $paginateResult['last_page'];
-			$result['length'] = $paginateResult['per_page'];
-		}
+		$result['total'] = $paginateResult['total'];
+		$result['currentPage'] = $paginateResult['current_page'];
+		$result['lastPage'] = $paginateResult['last_page'];
+		$result['length'] = $paginateResult['per_page'];
 		
-		return ['status' => 'Success', 'message' => '', 'code'=>200, 'data' => $returnResult, 'pagination'=>$result];
+		return ['status' => 'Success', 'message' => '', 'code'=>200, 'data' => $paginateResult['data'], 'pagination'=>$result];
 	}
 	public function findUserByEmail($username = '')
 	{
@@ -259,13 +225,11 @@ class InviteModel extends \Illuminate\Database\Eloquent\Model{
 			$payLoad = ['status' => 'Error', 'message' => $msg, 'code' => 400];
 		} else {
 
-			$selectField = ['id','user_type', 'unique_code' ,'status','owner_id', 'relation','created_at'];
+			$selectField = ['id','user_type', 'unique_code', 'status','created_at'];
 			$selectField[] = $this->app['helper']('DataTable_TableInitField')->decryptField('username');
 
 			$where = $this->app['helper']('DataTable_TableInitField')->searchEncryptField('username', $username);
-			$findUser = InviteModel::select($selectField)->whereRaw($where);
-			$findUser = $findUser->first();
-			
+			$findUser = InviteModel::select($selectField)->whereRaw($where)->first();
 			if (!empty($findUser)) { // user found
 
 				$payLoad = ['status' => 'Success', 'message' => '', 'code'=>200, 'data' => $findUser->toArray()];
@@ -298,13 +262,8 @@ class InviteModel extends \Illuminate\Database\Eloquent\Model{
 		if ($this->app['helper']('Utility')->notEmpty($userName)) {
 
 			$where = $this->app['helper']('DataTable_TableInitField')->searchEncryptField('username', $userName);
-			$duplicates = InviteModel::select('unique_code')->whereRaw($where);
-			$duplicates = $duplicates->first();
-			
-			if($this->app['helper']('Utility')->notEmpty($duplicates))
-				$duplicates = $duplicates->toArray();
-				$payLoad = ['status' => 'Success', 'message' => '', 'code'=>200, 'data' => $duplicates];
-			
+			$duplicates = InviteModel::select('unique_code')->whereRaw($where)->first();
+			$payLoad = ['status' => 'Success', 'message' => '', 'code'=>200, 'data' => $duplicates];
 		} else {
 
 			$msg = $this->app['translator']->trans('InvalidParametrs', array('%name%' => 'Username'));

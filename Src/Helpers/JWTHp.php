@@ -14,25 +14,14 @@ class JWTHp{
 		$jwtData = [];
 		if(isset($params['user_id']) && $this->app['helper']('Utility')->notEmpty($params['user_id']))
 			$jwtData['id_user'] = $params['user_id'];
-		
 		if(isset($params['username']) && $this->app['helper']('Utility')->notEmpty($params['username']))
 			$jwtData['username'] = $params['username'];
-		
 		if(isset($params['user_type']) && $this->app['helper']('Utility')->notEmpty($params['user_type']))
 			$jwtData['user_type'] = $params['user_type'];
-		
-		if(isset($params['parent_id']) && $this->app['helper']('Utility')->notEmpty($params['parent_id']))
-			$jwtData['parent_id'] = $params['parent_id'];
-		
-		if(isset($params['site_id']) && $this->app['helper']('Utility')->notEmpty($params['site_id']))
-			$jwtData['site_id'] = $params['site_id'];
-		
 		if(isset($params['unique_token']) && $this->app['helper']('Utility')->notEmpty($params['unique_token']))
 			$jwtData['token'] = $params['unique_token'];
-		
 		if(isset($params['source']) && $this->app['helper']('Utility')->notEmpty($params['source']))
 			$jwtData['source'] = $params['source'];
-		
 		if(isset($params['cDate']) && $this->app['helper']('Utility')->notEmpty($params['cDate']))
 			$jwtData['cDate'] = $params['cDate'];
 		

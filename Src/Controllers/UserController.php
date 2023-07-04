@@ -28,7 +28,7 @@ class UserController
 		$routing->get("/user/ids/{usersids}",[$this,'usersidsController']);
 		$routing->get("/user",[$this,'getAllUserController']);
 		$routing->put("/user/{userid}",[$this,'updateUserController']);
-		//$routing->post("/user",[$this,'addUserController']);
+		$routing->post("/user",[$this,'addUserController']);
 		$routing->delete("/user/{userid}",[$this,'removeUserController']); 
 		$routing->get("/user/device/{userid}",[$this,'getDeviceTokenByUserId']); 
 		$routing->get("/user/device/ids/{userids}",[$this,'getDeviceTokenByUserIds']); 
