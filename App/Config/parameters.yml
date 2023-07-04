@@ -23,9 +23,9 @@ parameters:
     mysql_params:
         driver     : "mysql"
         host       : "localhost"
-        database   : "c0oauth"
-        username   : "c0webservice"
-        password   : "Data$WebService@3018"
+        database   : ""
+        username   : ""
+        password   : ""
         charset    : "utf8"
         collation  : "utf8_general_ci"
         prefix     : "sm_"
@@ -39,21 +39,19 @@ parameters:
             1: "sql"
             2: "debug"
         mailer:
-            email: "itmanager@bfsc.co.uk"
+            email: ""
             subject: "PHP error_log message"
-            from: "info@smartysoftware.net"
+            from: ""
     wss:
-        AccessKey: "AKIAV3NR47BL7EBDTT6D"
-        SecretKey: "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"
+        AccessKey: ""
+        SecretKey: ""
         region: "eu-west-2"
         service: "execute-api"
         stage: "production"
-        idApi: "gxk3jwb9n2"
+        idApi: ""
 access_ip:
     1: "192.99.201.45"
-    2: "144.217.39.129"
-    3: "145.239.253.12"
-    4: "51.68.181.201"
+   
 anonymousRoute:
     1: "/authenticate/signin"
     2: "/authenticate/signup"
@@ -78,8 +76,8 @@ anonymousUrlContain:
     5: '/^\/Cache\/Images/i'
     
 software:
-    name: "Smarty Software"
-    global_email: "hello@smartysoftware.net"
+    name: ""
+    global_email: ""
     address: "68 King William St, London EC4N 7DZ"
     phone:
     fax:
